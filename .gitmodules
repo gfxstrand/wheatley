@@ -1,0 +1,6 @@
+[submodule "jni/external/wayland"]
+	path = jni/external/wayland
+	url = git://anongit.freedesktop.org/wayland/wayland
+[submodule "jni/external/libffi"]
+	path = jni/external/libffi
+	url = https://android.googlesource.com/platform/external/libffi

@@ -1,4 +1,9 @@
-LOCAL_PATH := $(call my-dir)
+WHEATLEY_PATH := $(call my-dir)
+
+include jni/external/libffi.mk
+include jni/external/wayland.mk
+
+LOCAL_PATH := $(WHEATLEY_PATH)
 
 include $(CLEAR_VARS)
 
