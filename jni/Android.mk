@@ -2,6 +2,8 @@ WHEATLEY_PATH := $(call my-dir)
 
 include jni/external/libffi.mk
 include jni/external/wayland.mk
+include jni/external/pixman.mk
+include jni/external/libwlb.mk
 
 LOCAL_PATH := $(WHEATLEY_PATH)
 

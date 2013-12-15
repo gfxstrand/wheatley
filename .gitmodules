@@ -4,3 +4,9 @@
 [submodule "jni/external/libffi"]
 	path = jni/external/libffi
 	url = https://android.googlesource.com/platform/external/libffi
+[submodule "jni/external/pixman"]
+	path = jni/external/pixman
+	url = https://android.googlesource.com/platform/external/pixman
+[submodule "jni/external/libwlb"]
+	path = jni/external/libwlb
+	url = https://github.com/jekstrand/libwlb
