@@ -1,5 +1,6 @@
 #include <jni.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include <EGL/egl.h>
 
@@ -21,6 +22,8 @@ struct wheatley_activity {
 	struct wlb_compositor *compositor;
 	struct wlb_gles2_renderer *renderer;
 
+	EGLDisplay egl_display;
+
 	struct wlb_output *output;
 };
 
@@ -28,24 +31,62 @@ static void
 activity_create_outputs(struct wheatley_activity *activity)
 {
 	int32_t width, height;
-	EGLDisplay display;
-
-	LOGD("Initializing EGL");
-	display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-	eglInitialize(display, 0, 0);
 
 	width = ANativeWindow_getWidth(activity->app->window);
 	height = ANativeWindow_getHeight(activity->app->window);
+
 	LOGD("Creating %dx%d Output", width, height);
 	activity->output = wlb_output_create(activity->compositor,
 					     100, 60, "Android", "none");
+	wlb_output_set_mode(activity->output, width, height, 60000);
+}
+
+static void
+activity_init_window(struct wheatley_activity *activity)
+{
+	if (activity->app->window == NULL)
+		return;
+
+	if (!activity->output)
+		activity_create_outputs(activity);
+
+	LOGD("Initializing EGL");
+	activity->egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+	eglInitialize(activity->egl_display, 0, 0);
+
 	activity->renderer =
 		wlb_gles2_renderer_create_for_egl(activity->compositor,
-						  display, NULL);
-	wlb_output_set_mode(activity->output, width, height, 60000);
+						  activity->egl_display, NULL);
 	wlb_gles2_renderer_add_egl_output(activity->renderer,
 					  activity->output,
 					  activity->app->window);
+}
+
+static void
+activity_term_window(struct wheatley_activity *activity)
+{
+	wlb_gles2_renderer_destroy(activity->renderer);
+	activity->renderer = NULL;
+	eglTerminate(activity->egl_display);
+	activity->egl_display = EGL_NO_DISPLAY;
+}
+
+static void
+activity_repaint(struct wheatley_activity *activity)
+{
+	struct timeval tv;
+	uint32_t timestamp;
+
+	if (!activity->renderer)
+		return;
+
+	wlb_gles2_renderer_repaint_output(activity->renderer, activity->output);
+
+	gettimeofday(&tv, NULL);
+	timestamp = tv.tv_sec * 1000 + tv.tv_usec / 1000;
+	wlb_output_repaint_complete(activity->output, timestamp);
+
+	wl_display_flush_clients(activity->display);
 }
 
 /**
@@ -73,18 +114,11 @@ activity_handle_cmd(struct android_app* app, int32_t cmd)
 		// The system has asked us to save our current state.  Do so.
 		break;
 	case APP_CMD_INIT_WINDOW:
-		// The window is being shown, get it ready.
-		if (activity->app->window != NULL) {
-			activity_create_outputs(activity);
-			/*
-			engine_init_display(engine);
-			engine_draw_frame(engine);
-			*/
-		}
+		activity_init_window(activity);
 		break;
 	case APP_CMD_TERM_WINDOW:
 		// The window is being hidden or closed, clean it up.
-		/* engine_term_display(engine); */
+		activity_term_window(activity);
 		break;
 	case APP_CMD_GAINED_FOCUS:
 		break;
@@ -121,8 +155,10 @@ display_dispatch_func(int fd, int events, void *data)
 {
 	struct wheatley_activity *activity = data;
 
-	wl_display_flush_clients(activity->display);
-	wl_event_loop_dispatch(activity->display_loop, 0);
+	if (events & ALOOPER_EVENT_INPUT)
+		wl_event_loop_dispatch(activity->display_loop, 0);
+	if (events & ALOOPER_EVENT_OUTPUT)
+		wl_display_flush_clients(activity->display);
 
 	return 1;
 }
@@ -138,6 +174,12 @@ android_main(struct android_app* app)
 	struct wheatley_activity activity;
 	struct android_poll_source* source;
 	int ident, events;
+	char *args[] = {
+		"su",
+		"-c",
+		"fedora.sh -u jason weston --backend=wayland-backend.so",
+		NULL
+	};
 
 	/* Make sure glue isn't stripped. */
 	app_dummy();
@@ -160,7 +202,11 @@ android_main(struct android_app* app)
 
 	wl_display_init_shm(activity.display);
 
-	ALooper_addFd(ALooper_prepare(0),
+	setenv("XDG_RUNTIME_DIR", "/data/data/net.jlekstrand.wheatley/", 1);
+	wlb_compositor_launch_client(activity.compositor,
+				     "/system/xbin/su", args);
+
+	ALooper_addFd(ALooper_forThread(),
 		      wl_event_loop_get_fd(activity.display_loop),
 		      ALOOPER_POLL_CALLBACK,
 		      ALOOPER_EVENT_INPUT | ALOOPER_EVENT_OUTPUT,
@@ -173,7 +219,9 @@ android_main(struct android_app* app)
 		 * events.  If animating, we loop until all events are
 		 * read, then continue to draw the next frame of animation.
 		 */
-		while ((ident=ALooper_pollAll(-1, NULL, &events, (void**)&source)) >= 0) {
+		while ((ident=ALooper_pollAll(activity.renderer ? 0 : -1,
+					      NULL, &events,
+					      (void**)&source)) >= 0) {
 
 			/* Process this event. */
 			if (source != NULL) {
@@ -188,7 +236,6 @@ android_main(struct android_app* app)
 		}
 
 		if (activity.renderer)
-			wlb_gles2_renderer_repaint_output(activity.renderer,
-							  activity.output);
+			activity_repaint(&activity);
         }
 }
