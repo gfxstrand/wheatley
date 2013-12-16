@@ -3,10 +3,13 @@ LOCAL_PATH := $(call my-dir)
 LIBWLB_PATH := $(LOCAL_PATH)/libwlb
 
 # Protocol stuff
-wayland_protocoldir := $(LIBWLB_PATH)/protocol
-include $(LOCAL_PATH)/wayland-scanner.mk
+WAYLAND_SCANNER_SRC := $(LIBWLB_PATH)/protocol/fullscreen-shell.xml
+WAYLAND_SCANNER_DEST := $(LIBWLB_PATH)/libwlb
+include $(WHEATLEY_PATH)/external/wayland-scanner.mk
 
 LOCAL_PATH := $(LIBWLB_PATH)/libwlb
+
+wlb: wayland-server
 
 include $(CLEAR_VARS)
 
@@ -25,7 +28,10 @@ LOCAL_SRC_FILES	:=			\
 	compositor.c
 LOCAL_GENERATED_SOURCES	:= fullscreen-shell-protocol.c
 LOCAL_LDLIBS		:= -lEGL -lGLESv2
+LOCAL_EXPORT_C_INCLUDES := $(LIBWLB_PATH)/libwlb
 LOCAL_STATIC_LIBRARIES	:= libpixman libwayland-server
 
-include $(BUILD_SHARED_LIBRARY)
+wlb: wayland-server $(LOCAL_PATH)/fullscreen-shell-server-protocol.h
+
+include $(BUILD_STATIC_LIBRARY)
 

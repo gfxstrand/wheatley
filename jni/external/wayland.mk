@@ -21,7 +21,8 @@ LIBWAYLAND_CLIENT_SRC =		\
 LIBWAYLAND_CFLAGS := -O2
 
 # Protocol stuff
-wayland_protocoldir := $(LIBWAYLAND_PATH)/protocol
+WAYLAND_SCANNER_SRC := $(LIBWAYLAND_PATH)/protocol/wayland.xml
+WAYLAND_SCANNER_DEST := $(LIBWAYLAND_PATH)/src
 include $(LOCAL_PATH)/wayland-scanner.mk
 
 LOCAL_PATH := $(LIBWAYLAND_PATH)
@@ -36,7 +37,10 @@ LOCAL_C_INCLUDES	:= $(LIBWAYLAND_EXTRA_PATH)
 LOCAL_EXPORT_C_INCLUDES	:= $(LOCAL_C_INCLUDES) $(LIBWAYLAND_PATH)/src
 LOCAL_STATIC_LIBRARIES	:= libffi
 
+wayland-client: $(LIBWAYLAND_PATH)/src/wayland-client-protocol.h
+
 include $(BUILD_STATIC_LIBRARY)
+$(LOCAL_OBJECTS): $(LOCAL_PATH)/src/wayland-client-protocol.h
 
 include $(CLEAR_VARS)
 
@@ -48,5 +52,7 @@ LOCAL_C_INCLUDES	:= $(LIBWAYLAND_EXTRA_PATH)
 LOCAL_EXPORT_C_INCLUDES	:= $(LOCAL_C_INCLUDES) $(LIBWAYLAND_PATH)/src
 LOCAL_STATIC_LIBRARIES	:= libffi
 
-include $(BUILD_STATIC_LIBRARY)
+wayland-server: $(LIBWAYLAND_PATH)/src/wayland-server-protocol.h
 
+include $(BUILD_STATIC_LIBRARY)
+$(LOCAL_OBJECTS): $(LOCAL_PATH)/src/wayland-server-protocol.h
