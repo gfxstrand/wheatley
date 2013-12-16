@@ -12,7 +12,7 @@
                   android:label="@string/app_name"
                   android:configChanges="orientation|keyboardHidden">
             <meta-data android:name="android.app.lib_name"
-                    android:value="weatley" />
+                    android:value="wheatley" />
         </activity>
         <!-- This provides us with a standard app entry point.  We can
              change it as needed if we ever change the opening activity -->
@@ -20,7 +20,7 @@
                         android:name="MainActivity"
                         android:label="@string/app_name">
             <meta-data android:name="android.app.lib_name"
-                    android:value="weatley" />
+                    android:value="wheatley" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
