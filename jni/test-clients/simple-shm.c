@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <stdbool.h>
 #include <assert.h>
 #include <unistd.h>
@@ -35,6 +36,11 @@
 #include <wayland-client.h>
 #include "os-compatibility.h"
 #include "fullscreen-shell-client-protocol.h"
+
+#include <android/log.h>
+#define LOGD(...) ((void)__android_log_print(ANDROID_LOG_DEBUG, "simple-shm", __VA_ARGS__))
+#define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "simple-shm", __VA_ARGS__))
+#define LOGE(...) ((void)__android_log_print(ANDROID_LOG_ERROR, "simple-shm", __VA_ARGS__))
 
 struct display {
 	struct wl_display *display;
@@ -87,14 +93,14 @@ create_shm_buffer(struct display *display, struct buffer *buffer,
 
 	fd = os_create_anonymous_file(size);
 	if (fd < 0) {
-		fprintf(stderr, "creating a buffer file for %d B failed: %m\n",
-			size);
+		LOGE("creating a buffer file for %d B failed: %s\n",
+		     size, strerror(errno));
 		return -1;
 	}
 
 	data = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	if (data == MAP_FAILED) {
-		fprintf(stderr, "mmap failed: %m\n");
+		LOGE("mmap failed: %s\n", strerror(errno));
 		close(fd);
 		return -1;
 	}
@@ -275,9 +281,8 @@ redraw(void *data, struct wl_callback *callback, uint32_t time)
 
 	buffer = window_next_buffer(window);
 	if (!buffer) {
-		fprintf(stderr,
-			!callback ? "Failed to create the first buffer.\n" :
-			"Both buffers busy at redraw(). Server bug?\n");
+		LOGE(!callback ? "Failed to create the first buffer.\n" :
+		     "Both buffers busy at redraw(). Server bug?\n");
 		abort();
 	}
 
@@ -353,26 +358,28 @@ create_display(void)
 
 	display = malloc(sizeof *display);
 	if (display == NULL) {
-		fprintf(stderr, "out of memory\n");
+		LOGE("out of memory\n");
 		exit(1);
 	}
 	display->display = wl_display_connect(NULL);
 	assert(display->display);
 
+	LOGD("Fetching globals...");
 	display->formats = 0;
 	display->registry = wl_display_get_registry(display->display);
 	wl_registry_add_listener(display->registry,
 				 &registry_listener, display);
 	wl_display_roundtrip(display->display);
+	LOGD("Roundtrip complete.");
 	if (display->shm == NULL) {
-		fprintf(stderr, "No wl_shm global\n");
+		LOGE("No wl_shm global\n");
 		exit(1);
 	}
 
 	wl_display_roundtrip(display->display);
 
 	if (!(display->formats & (1 << WL_SHM_FORMAT_XRGB8888))) {
-		fprintf(stderr, "WL_SHM_FORMAT_XRGB32 not available\n");
+		LOGE("WL_SHM_FORMAT_XRGB32 not available\n");
 		exit(1);
 	}
 
@@ -418,6 +425,8 @@ main(int argc, char **argv)
 	struct window *window;
 	int ret = 0;
 
+	LOGD("Starting...");
+
 	display = create_display();
 	window = create_window(display, 250, 250);
 	if (!window)
@@ -437,7 +446,7 @@ main(int argc, char **argv)
 	while (running && ret != -1)
 		ret = wl_display_dispatch(display->display);
 
-	fprintf(stderr, "simple-shm exiting\n");
+	LOGD("simple-shm exiting\n");
 	destroy_window(window);
 	destroy_display(display);
 

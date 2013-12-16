@@ -12,6 +12,7 @@ LOCAL_SRC_FILES		:=		\
 	fullscreen-shell-protocol.c	\
 	os-compatibility.c		\
 	simple-shm.c
+LOCAL_LDLIBS := -llog
 LOCAL_STATIC_LIBRARIES	:= libwayland-client
 
 simple-shm: wayland-client $(LOCAL_PATH)/fullscreen-shell-client-protocol.h
