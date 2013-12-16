@@ -98,17 +98,18 @@ wlb_android_log_func(enum wlb_log_level level, const char *format, va_list ap)
 {
 	int priority;
 
-	switch(level) {
-	WLB_LOG_LEVEL_DEBUG:
+	switch (level) {
+	case WLB_LOG_LEVEL_DEBUG:
 		priority = ANDROID_LOG_DEBUG;
 		break;
-	WLB_LOG_LEVEL_WARNING:
+	case WLB_LOG_LEVEL_WARNING:
 		priority = ANDROID_LOG_WARN;
 		break;
-	WLB_LOG_LEVEL_ERROR:
+	case WLB_LOG_LEVEL_ERROR:
 		priority = ANDROID_LOG_ERROR;
 		break;
 	default:
+		LOGD("default log");
 		priority = ANDROID_LOG_UNKNOWN;
 	}
 
@@ -150,6 +151,8 @@ android_main(struct android_app* app)
 	if (app->savedState != NULL) {
 		/* XXX: We should restore from saved state. */
 	}
+
+	wlb_log_set_func(wlb_android_log_func);
 
 	activity.display = wl_display_create();
 	activity.display_loop = wl_display_get_event_loop(activity.display);
