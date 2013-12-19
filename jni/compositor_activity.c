@@ -11,6 +11,8 @@
 
 #include <libwlb.h>
 
+#include "wlegl.h"
+
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "wheatley", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "wheatley", __VA_ARGS__))
 #define LOGD(...) ((void)__android_log_print(ANDROID_LOG_DEBUG, "wheatley", __VA_ARGS__))
@@ -22,6 +24,7 @@ struct wheatley_activity {
 	struct wl_event_loop *display_loop;
 	struct wlb_compositor *compositor;
 	struct wlb_gles2_renderer *renderer;
+	struct wlegl *wlegl;
 
 	EGLDisplay egl_display;
 
@@ -211,6 +214,8 @@ android_main(struct android_app* app)
 	activity.compositor = wlb_compositor_create(activity.display);
 
 	wl_display_init_shm(activity.display);
+
+	activity.wlegl = wlegl_create(activity.display);
 
 	setenv("XDG_RUNTIME_DIR", "/data/data/net.jlekstrand.wheatley/", 1);
 	wlb_compositor_launch_client(activity.compositor,
