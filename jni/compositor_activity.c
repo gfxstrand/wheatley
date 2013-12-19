@@ -1,4 +1,5 @@
 #include <jni.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <unistd.h>
 
@@ -128,7 +129,7 @@ activity_handle_cmd(struct android_app* app, int32_t cmd)
 }
 
 static int
-wlb_android_log_func(enum wlb_log_level level, const char *format, va_list ap)
+wlb_log_android_func(enum wlb_log_level level, const char *format, va_list ap)
 {
 	int priority;
 
@@ -148,6 +149,12 @@ wlb_android_log_func(enum wlb_log_level level, const char *format, va_list ap)
 	}
 
 	return __android_log_vprint(priority, "libwlb", format, ap);
+}
+
+static void
+wl_debug_android_func(const char *format, va_list ap)
+{
+	__android_log_vprint(ANDROID_LOG_DEBUG, "wayland", format, ap);
 }
 
 static int
@@ -194,7 +201,10 @@ android_main(struct android_app* app)
 		/* XXX: We should restore from saved state. */
 	}
 
-	wlb_log_set_func(wlb_android_log_func);
+	wlb_log_set_func(wlb_log_android_func);
+	wl_debug_set_handler_server(wl_debug_android_func);
+
+	setenv("WAYLAND_DEBUG", "server", 1);
 
 	activity.display = wl_display_create();
 	activity.display_loop = wl_display_get_event_loop(activity.display);
