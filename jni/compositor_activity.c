@@ -184,7 +184,7 @@ android_main(struct android_app* app)
 	char *args[] = {
 		"su",
 		"-c",
-		"fedora.sh -u jason weston --backend=wayland-backend.so",
+		"fedora.sh -u jason weston",
 		NULL
 	};
 
