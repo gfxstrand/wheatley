@@ -215,7 +215,7 @@ android_main(struct android_app* app)
 
 	wl_display_init_shm(activity.display);
 
-	activity.wlegl = wlegl_create(activity.display);
+	activity.wlegl = wlegl_create(activity.compositor);
 
 	setenv("XDG_RUNTIME_DIR", "/data/data/net.jlekstrand.wheatley/", 1);
 	wlb_compositor_launch_client(activity.compositor,

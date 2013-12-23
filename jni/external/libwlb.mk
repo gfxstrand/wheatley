@@ -25,6 +25,7 @@ LOCAL_SRC_FILES	:=			\
 	keyboard.c			\
 	pixman-renderer.c		\
 	glesv2-renderer.c		\
+	wayland-egl-binding.c		\
 	compositor.c
 LOCAL_GENERATED_SOURCES	:= fullscreen-shell-protocol.c
 LOCAL_LDLIBS		:= -lEGL -lGLESv2
