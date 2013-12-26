@@ -5,6 +5,7 @@ import android.app.ListActivity;
 import android.app.LoaderManager;
 import android.content.AsyncTaskLoader;
 import android.content.Context;
+import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -18,10 +19,10 @@ import android.view.ViewGroup;
 import android.view.LayoutInflater;
 import android.widget.CursorAdapter;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 
 public class ClientListActivity extends ListActivity
-        implements LoaderManager.LoaderCallbacks<Cursor>
 {
     private static final String LOG_TAG = "wheatley:ClientListActivity";
 
@@ -34,7 +35,7 @@ public class ClientListActivity extends ListActivity
 
         public void bindView(View view, Context context, Cursor cursor)
         {
-            Client client = new Client(context, cursor);
+            Client client = Client.createForCursor(context, cursor);
 
             ((TextView)view.findViewById(R.id.title)).setText(
                     client.getTitle());
@@ -60,8 +61,10 @@ public class ClientListActivity extends ListActivity
         }
     }
 
+    private SQLiteDatabase _database;
     private ClientCursorAdapter _adapter;
 
+    @Override
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
@@ -70,16 +73,21 @@ public class ClientListActivity extends ListActivity
 
         ClientDatabaseHelper helper =
                 new ClientDatabaseHelper(ClientListActivity.this);
-        SQLiteDatabase db = helper.getReadableDatabase();
+        _database = helper.getReadableDatabase();
 
-        Cursor cursor = db.query(Client.DB.DATABASE_TABLE,
+        _adapter = new ClientCursorAdapter(this, null);
+        setListAdapter(_adapter);
+    }
+
+    @Override
+    public void onStart()
+    {
+        super.onStart();
+
+        Cursor cursor = _database.query(Client.DB.DATABASE_TABLE,
                 Client.DB.DATABASE_PROJECTION,
                 null, null, null, null, null, null);
-
-        _adapter = new ClientCursorAdapter(this, cursor);
-        setListAdapter(_adapter);
-
-        // getLoaderManager().initLoader(0, null, this);
+        _adapter.swapCursor(cursor);
     }
 
     @Override
@@ -102,38 +110,22 @@ public class ClientListActivity extends ListActivity
         }
     }
 
+    @Override 
+    public void onListItemClick(ListView l, View v, int position, long id) {
+        Log.d(LOG_TAG, "onListItemCliek(,,, " + id + ")");
+
+        Intent intent = new Intent(this, ClientEditActivity.class);
+        intent.putExtra(ClientEditActivity.EXTRA_CLIENT_ID, id);
+        startActivity(intent);
+    }
+
     private void onActionAddClient()
     {
         Log.d(LOG_TAG, "onActionAddClient()");
-    }
 
-    public Loader<Cursor> onCreateLoader(int id, Bundle args)
-    {
-        Log.d(LOG_TAG, "onCreateLoader");
-        return new AsyncTaskLoader<Cursor>(this) {
-            public Cursor loadInBackground()
-            {
-                Log.d(LOG_TAG, "Loading configured clients.");
-
-                ClientDatabaseHelper helper =
-                        new ClientDatabaseHelper(ClientListActivity.this);
-                SQLiteDatabase db = helper.getReadableDatabase();
-
-                return db.query(Client.DB.DATABASE_TABLE,
-                        Client.DB.DATABASE_PROJECTION,
-                        null, null, null, null, null, null);
-            }
-        };
-    }
-
-    public void onLoadFinished(Loader<Cursor> loader, Cursor data)
-    {
-        _adapter.swapCursor(data);
-    }
-
-    public void onLoaderReset(Loader<Cursor> loader)
-    {
-        _adapter.swapCursor(null);
+        Intent intent = new Intent(this, ClientEditActivity.class);
+        intent.putExtra(ClientEditActivity.EXTRA_CLIENT_ID, -1);
+        startActivity(intent);
     }
 }
 

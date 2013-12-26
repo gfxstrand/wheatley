@@ -47,13 +47,18 @@ class Client
         _iconBitmapDirty = false;
     }
 
-    public Client(Context context, Cursor cursor)
+    private Client(Context context, Cursor cursor)
     {
         _context = context;
         _id = cursor.getLong(cursor.getColumnIndex(DB._ID));
         _title = cursor.getString(cursor.getColumnIndex(DB.TITLE));
         _iconFilename = cursor.getString(cursor.getColumnIndex(DB.ICON));
         _command = cursor.getString(cursor.getColumnIndex(DB.COMMAND));
+    }
+
+    public static Client createForCursor(Context context, Cursor cursor)
+    {
+        return new Client(context, cursor);
     }
 
     public void

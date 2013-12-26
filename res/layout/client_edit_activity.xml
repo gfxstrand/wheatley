@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="vertical"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:padding="8dip" >
+    <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="48dip" >
+        <ImageView
+                android:id="@+id/icon"
+                android:layout_width="48dip"
+                android:layout_height="48dip"
+                android:clickable="true"
+                android:onClick="onIconClicked"
+                android:src="@drawable/ic_launcher" />
+        <EditText
+                android:id="@+id/title"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:hint="Title" />
+    </LinearLayout>
+    <EditText
+        android:id="@+id/command"
+        android:layout_width="fill_parent"
+        android:layout_height="48dp"
+        android:hint="Command" />
+    <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dip"
+            android:gravity="bottom" >
+        <Button android:id="@+id/cancel_buffon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="onCancelClicked"
+                android:text="Cancel" />
+        <Button android:id="@+id/add_widget_buffon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="onSaveClicked"
+                android:text="Save" />
+    </LinearLayout>
+</LinearLayout>
