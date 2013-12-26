@@ -1,0 +1,28 @@
+<GridLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:columnCount="2"
+        android:padding="4dip">
+    <ImageView
+            android:id="@+id/icon"
+            android:src="@drawable/ic_launcher"
+            android:layout_width="48dip"
+            android:layout_height="48dip"
+            android:layout_rowSpan="2"
+            android:layout_marginRight="4dip"/>
+    <TextView
+            android:id="@+id/title"
+            android:lines="1"
+            android:ellipsize="end"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+    <TextView
+            android:id="@+id/command"
+            android:lines="1"
+            android:ellipsize="end"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall" />
+</GridLayout>
