@@ -7,3 +7,4 @@
 /obj/
 /libwlb
 /android_headers/
+/abrt_checker_*.log
