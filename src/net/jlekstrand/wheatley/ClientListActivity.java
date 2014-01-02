@@ -2,14 +2,13 @@ package net.jlekstrand.wheatley;
 
 import android.app.ActionBar;
 import android.app.ListActivity;
-import android.app.LoaderManager;
-import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -25,6 +24,9 @@ import android.widget.TextView;
 public class ClientListActivity extends ListActivity
 {
     private static final String LOG_TAG = "wheatley:ClientListActivity";
+
+    private static final int MODE_DEFAULT = 0;
+    private static final int MODE_CONFIGURE_WIDGET = 1;
 
     private class ClientCursorAdapter extends CursorAdapter
     {
@@ -63,6 +65,7 @@ public class ClientListActivity extends ListActivity
 
     private SQLiteDatabase _database;
     private ClientCursorAdapter _adapter;
+    private String _action;
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -70,6 +73,13 @@ public class ClientListActivity extends ListActivity
         super.onCreate(savedInstanceState);
 
         Log.d(LOG_TAG, "onCreate");
+
+        Intent intent = getIntent();
+        _action = intent.getAction();
+
+        if (Intent.ACTION_CREATE_SHORTCUT.equals(_action))
+            // Cancel if the press the back button
+            setResult(RESULT_CANCELED);
 
         ClientDatabaseHelper helper =
                 new ClientDatabaseHelper(ClientListActivity.this);
@@ -114,9 +124,27 @@ public class ClientListActivity extends ListActivity
     public void onListItemClick(ListView l, View v, int position, long id) {
         Log.d(LOG_TAG, "onListItemCliek(,,, " + id + ")");
 
-        Intent intent = new Intent(this, ClientEditActivity.class);
-        intent.putExtra(ClientEditActivity.EXTRA_CLIENT_ID, id);
-        startActivity(intent);
+        if (Intent.ACTION_CREATE_SHORTCUT.equals(_action)) {
+            Intent shortcutIntent = new Intent(this, WaylandActivity.class);
+            shortcutIntent.setAction(Intent.ACTION_RUN);
+            shortcutIntent.setData(Client.BASE_CONTENT_URI.buildUpon().appendPath(String.valueOf(id)).build());
+
+            Client client = Client.createForId(this, _database, id);
+
+            Intent addIntent = new Intent();
+            addIntent.setAction("com.android.launcher.action.INSTALL_SHORTCUT");
+            addIntent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent);
+            addIntent.putExtra(Intent.EXTRA_SHORTCUT_NAME, client.getTitle());
+            addIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON, client.getIcon());
+
+            setResult(RESULT_OK, addIntent);
+            finish();
+        } else {
+            Intent intent = new Intent(this, ClientEditActivity.class);
+            intent.setAction(Intent.ACTION_EDIT);
+            intent.setData(Client.BASE_CONTENT_URI.buildUpon().appendPath(String.valueOf(id)).build());
+            startActivity(intent);
+        }
     }
 
     private void onActionAddClient()
@@ -124,7 +152,7 @@ public class ClientListActivity extends ListActivity
         Log.d(LOG_TAG, "onActionAddClient()");
 
         Intent intent = new Intent(this, ClientEditActivity.class);
-        intent.putExtra(ClientEditActivity.EXTRA_CLIENT_ID, -1);
+        intent.setAction(Intent.ACTION_EDIT);
         startActivity(intent);
     }
 }

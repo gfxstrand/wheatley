@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -35,8 +36,6 @@ public class ClientEditActivity extends Activity
         setResult(RESULT_CANCELED);
 
         Intent intent = getIntent();
-        Bundle extras = intent.getExtras();
-        long clientId = extras.getLong(EXTRA_CLIENT_ID, -1);
 
         setContentView(R.layout.client_edit_activity);
 
@@ -47,17 +46,9 @@ public class ClientEditActivity extends Activity
         ClientDatabaseHelper helper = new ClientDatabaseHelper(this);
         _database = helper.getReadableDatabase();
 
-        if (clientId > 0) {
-            Cursor cursor = _database.query(Client.DB.DATABASE_TABLE,
-                    Client.DB.DATABASE_PROJECTION,
-                    Client.DB._ID + " = " + clientId,
-                    null, null, null, null, null);
-
-            if (cursor.getCount() > 0) {
-                cursor.moveToFirst();
-                _client = Client.createForCursor(this, cursor);
-            }
-        }
+        Uri clientUri = intent.getData();
+        if (clientUri != null)
+            _client = Client.createForUri(this, _database, clientUri);
 
         if (_client == null) {
             _client = new Client(this);

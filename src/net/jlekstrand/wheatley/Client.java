@@ -1,6 +1,7 @@
 package net.jlekstrand.wheatley;
 
 import java.io.FileNotFoundException;
+import java.util.List;
 
 import android.content.Context;
 import android.content.ContentValues;
@@ -10,10 +11,16 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.util.Log;
 import android.widget.Toast;
 
 class Client
 {
+    private static final String LOG_TAG = "wheatley:Client";
+
+    public static final Uri BASE_CONTENT_URI =
+            Uri.parse("content://net.jlekstrand.wheatley/clients/");
+
     public static class DB
     {
         public static final String DATABASE_TABLE = "clients";
@@ -59,6 +66,52 @@ class Client
     public static Client createForCursor(Context context, Cursor cursor)
     {
         return new Client(context, cursor);
+    }
+
+    public static Client createForId(Context context, SQLiteDatabase db,
+            long clientId)
+    {
+        Cursor cursor = db.query(Client.DB.DATABASE_TABLE,
+                Client.DB.DATABASE_PROJECTION,
+                Client.DB._ID + "=?", new String[] { String.valueOf(clientId) },
+                null, null, null, null);
+
+        if (cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            return createForCursor(context, cursor);
+        }
+
+        return null;
+    }
+
+    public static Client createForUri(Context context, SQLiteDatabase db,
+            Uri uri)
+    {
+        if (! "content".equals(uri.getScheme())) {
+            Log.d(LOG_TAG, "Not a content URI: " + uri);
+            return null;
+        }
+
+        if (! "net.jlekstrand.wheatley".equals(uri.getAuthority())) {
+            Log.d(LOG_TAG, "Wrong URI authority: " + uri);
+            return null;
+        }
+
+        List<String> path = uri.getPathSegments();
+        if (path.size() != 2 || ! "clients".equals(path.get(0))) {
+            Log.e(LOG_TAG, "Invalid URI: " + uri);
+            return null;
+        }
+
+        long id = -1;
+        try {
+            id = Long.parseLong(path.get(1));
+        } catch (NumberFormatException e) {
+            Log.e(LOG_TAG, "Invalid URI: " + uri);
+            return null;
+        }
+
+        return createForId(context, db, id);
     }
 
     public void

@@ -6,6 +6,8 @@
     <uses-sdk android:minSdkVersion="16" />
     <uses-feature android:glEsVersion="0x00020000"/>
     <uses-permission android:name="android.permission.ACCESS_SUPERUSER" />
+    <uses-permission
+            android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
     <application android:label="@string/app_name"
                  android:icon="@drawable/ic_launcher"
                  android:debuggable="true">
@@ -14,6 +16,13 @@
                   android:configChanges="orientation|keyboardHidden">
             <meta-data android:name="android.app.lib_name"
                     android:value="wheatley" />
+
+            <intent-filter>
+                <action android:name="android.intent.action.RUN" />
+                <data android:scheme="content" />
+                <data android:host="net.jlekstrand.wheatley" />
+                <data android:pathPrefix="clients/" />
+            </intent-filter>
         </activity>
 
         <activity android:name="ClientListActivity"
@@ -23,6 +32,16 @@
         <activity android:name="ClientEditActivity"
                   android:label="@string/app_name">
         </activity>
+
+        <activity-alias android:name="ClientShortcutActivity"
+                        android:targetActivity="ClientListActivity"
+                        android:label="@string/app_name"
+                        android:icon="@drawable/ic_launcher">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
 
         <!-- This provides us with a standard app entry point.  We can
              change it as needed if we ever change the opening activity -->
