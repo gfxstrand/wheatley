@@ -1,4 +1,4 @@
-package net.jlekstrand.wheatley;
+package net.jlekstrand.wheatley.config;
 
 import java.io.FileNotFoundException;
 import java.util.List;
@@ -14,7 +14,7 @@ import android.net.Uri;
 import android.util.Log;
 import android.widget.Toast;
 
-class Client
+public class Client
 {
     private static final String LOG_TAG = "wheatley:Client";
 
@@ -71,6 +71,11 @@ class Client
     public static Client createForId(Context context, SQLiteDatabase db,
             long clientId)
     {
+        if (db == null) {
+            DatabaseHelper helper = new DatabaseHelper(context);
+            db = helper.getReadableDatabase();
+        }
+
         Cursor cursor = db.query(Client.DB.DATABASE_TABLE,
                 Client.DB.DATABASE_PROJECTION,
                 Client.DB._ID + "=?", new String[] { String.valueOf(clientId) },

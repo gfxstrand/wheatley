@@ -1,4 +1,4 @@
-package net.jlekstrand.wheatley;
+package net.jlekstrand.wheatley.gui;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -12,6 +12,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
+
+import net.jlekstrand.wheatley.R;
+import net.jlekstrand.wheatley.config.Client;
+import net.jlekstrand.wheatley.config.DatabaseHelper;
 
 public class ClientEditActivity extends Activity
 {
@@ -43,7 +47,7 @@ public class ClientEditActivity extends Activity
         _iconView = (ImageView)findViewById(R.id.icon);
         _commandEdit = (EditText)findViewById(R.id.command);
 
-        ClientDatabaseHelper helper = new ClientDatabaseHelper(this);
+        DatabaseHelper helper = new DatabaseHelper(this);
         _database = helper.getReadableDatabase();
 
         Uri clientUri = intent.getData();

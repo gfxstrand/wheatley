@@ -1,11 +1,11 @@
-package net.jlekstrand.wheatley;
+package net.jlekstrand.wheatley.config;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
-class ClientDatabaseHelper extends SQLiteOpenHelper
+public class DatabaseHelper extends SQLiteOpenHelper
 {
     private static final String LOG_TAG = "wheatley:ClientDatabaseHelper";
 
@@ -14,7 +14,7 @@ class ClientDatabaseHelper extends SQLiteOpenHelper
 
     Context _context;
 
-    public ClientDatabaseHelper(Context context)
+    public DatabaseHelper(Context context)
     {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
 

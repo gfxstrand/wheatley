@@ -1,4 +1,4 @@
-package net.jlekstrand.wheatley;
+package net.jlekstrand.wheatley.gui;
 
 import android.app.ActionBar;
 import android.app.ListActivity;
@@ -20,6 +20,11 @@ import android.widget.CursorAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import net.jlekstrand.wheatley.R;
+import net.jlekstrand.wheatley.WaylandActivity;
+import net.jlekstrand.wheatley.config.Client;
+import net.jlekstrand.wheatley.config.DatabaseHelper;
 
 public class ClientListActivity extends ListActivity
 {
@@ -81,8 +86,7 @@ public class ClientListActivity extends ListActivity
             // Cancel if the press the back button
             setResult(RESULT_CANCELED);
 
-        ClientDatabaseHelper helper =
-                new ClientDatabaseHelper(ClientListActivity.this);
+        DatabaseHelper helper = new DatabaseHelper(this);
         _database = helper.getReadableDatabase();
 
         _adapter = new ClientCursorAdapter(this, null);
@@ -120,7 +124,7 @@ public class ClientListActivity extends ListActivity
         }
     }
 
-    @Override 
+    @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         Log.d(LOG_TAG, "onListItemCliek(,,, " + id + ")");
 
