@@ -84,6 +84,9 @@ Java_net_jlekstrand_wheatley_WaylandActivity_destroyNative(JNIEnv *env,
     struct wheatley_activity *wa =
             (struct wheatley_activity *)(intptr_t)nativeHandle;
 
+    if (wa->renderer)
+        wlb_gles2_renderer_destroy(wa->renderer);
+
     wheatley_activity_finish_egl(wa);
 
     free(wa);
@@ -100,8 +103,8 @@ Java_net_jlekstrand_wheatley_WaylandActivity_surfaceCreatedNative(JNIEnv *env,
 
     wheatley_activity_init_egl(wa);
 
-	wa->renderer = wlb_gles2_renderer_create_for_egl(wa->compositor->compositor,
-            wa->egl_display, NULL);
+	wa->renderer = wlb_gles2_renderer_create_for_egl(
+            wa->compositor->compositor, wa->egl_display, NULL);
 
     window = ANativeWindow_fromSurface(env, jsurface);
     if (window == NULL) {
@@ -136,6 +139,7 @@ Java_net_jlekstrand_wheatley_WaylandActivity_surfaceDestroyedNative(JNIEnv *env,
             (struct wheatley_activity *)(intptr_t)nativeHandle;
 
     wlb_gles2_renderer_destroy(wa->renderer);
+    wa->renderer = NULL;
 }
 
 JNIEXPORT void JNICALL
@@ -145,8 +149,11 @@ Java_net_jlekstrand_wheatley_WaylandActivity_repaintNative(
     struct wheatley_activity *wa =
             (struct wheatley_activity *)(intptr_t)nativeHandle;
 
+    if (wa->output.output == NULL)
+        return;
+
     if (forceRepaint || wlb_output_needs_repaint(wa->output.output))
-	    wlb_gles2_renderer_repaint_output(wa->renderer, wa->output.output);
+        wlb_gles2_renderer_repaint_output(wa->renderer, wa->output.output);
 }
 
 JNIEXPORT void JNICALL
