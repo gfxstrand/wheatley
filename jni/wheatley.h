@@ -4,6 +4,7 @@
 #include <jni.h>
 #include <android/log.h>
 #include <android/looper.h>
+#include <EGL/egl.h>
 #include <libwlb.h>
 
 #include "wlegl.h"
@@ -26,8 +27,6 @@ struct wheatley_compositor {
     struct wlegl *wlegl;
 
     ALooper *looper;
-
-    struct wl_list output_list;
 };
 
 #endif /* ! defined __WHEATLEY_WHEATLEY_H__ */
