@@ -84,10 +84,12 @@ public class WaylandActivity extends Activity
             @Override
             public void doFrame(long frameTimeNanos)
             {
+                _repaintScheduled = false;
+
+                // It is possible that the surface was removed after the
+                // callback was posted.  In this case, we just return early.
                 if (_surface == null)
                     return;
-
-                _repaintScheduled = false;
 
                 repaintNative(_nativeHandle, false);
 
