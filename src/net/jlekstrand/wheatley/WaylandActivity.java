@@ -84,6 +84,9 @@ public class WaylandActivity extends Activity
             @Override
             public void doFrame(long frameTimeNanos)
             {
+                if (_surface == null)
+                    return;
+
                 _repaintScheduled = false;
 
                 repaintNative(_nativeHandle, false);
@@ -122,12 +125,14 @@ public class WaylandActivity extends Activity
     {
         _surface = holder.getSurface();
         surfaceCreatedNative(_nativeHandle, _surface);
+        scheduleRepaint();
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h)
     {
         surfaceChangedNative(_nativeHandle, format, w, h);
+        scheduleRepaint();
     }
 
     @Override
@@ -148,3 +153,5 @@ public class WaylandActivity extends Activity
         System.loadLibrary("wheatley");
     }
 }
+
+// vim: ts=4 sw=4 sts=4 expandtab
