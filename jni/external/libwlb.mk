@@ -22,6 +22,7 @@ LOCAL_SRC_FILES	:=			\
 	output.c			\
 	seat.c				\
 	pointer.c			\
+	touch.c				\
 	keyboard.c			\
 	pixman-renderer.c		\
 	glesv2-renderer.c		\

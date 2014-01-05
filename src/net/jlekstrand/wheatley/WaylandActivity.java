@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Choreographer;
+import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -32,6 +33,16 @@ public class WaylandActivity extends Activity
             boolean forceRepaint);
     private static native void repaintFinishedNative(long nativeHandle,
             int timestamp);
+
+    private static native void touchDownNative(long nativeHandle,
+            int time, int id, float x, float y);
+    private static native void touchMoveNative(long nativeHandle,
+            int id, float x, float y);
+    private static native void touchFinishFrameNative(long nativeHandle,
+            int time);
+    private static native void touchUpNative(long nativeHandle,
+            int time, int id);
+    private static native void touchCancelNative(long nativeHandle);
 
     private Compositor _compositor;
     private Choreographer _choreographer;
@@ -149,6 +160,51 @@ public class WaylandActivity extends Activity
     {
         Log.d(LOG_TAG, "surfaceRedrawNeeded()");
         scheduleRepaint();
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event)
+    {
+        switch (event.getActionMasked()) {
+        case MotionEvent.ACTION_DOWN:
+        case MotionEvent.ACTION_POINTER_DOWN: {
+            final int idx = event.getActionIndex();
+            touchDownNative(_nativeHandle, (int)event.getEventTime(),
+                    event.getPointerId(idx), event.getX(idx), event.getY(idx));
+        }   break;
+        case MotionEvent.ACTION_MOVE: {
+            final int historySize = event.getHistorySize();
+            final int pointerCount = event.getPointerCount();
+
+            for (int h = 0; h < historySize; h++) {
+                for (int p = 0; p < pointerCount; p++) {
+                    touchMoveNative(_nativeHandle,
+                            event.getPointerId(p),
+                            event.getHistoricalX(p, h),
+                            event.getHistoricalY(p, h));
+                }
+                touchFinishFrameNative(_nativeHandle,
+                        (int)event.getHistoricalEventTime(h));
+            }
+
+            for (int p = 0; p < pointerCount; p++) {
+                Log.d(LOG_TAG, "Touch Move: (" + event.getX(p) + ", " + event.getY(p) + ")");
+                touchMoveNative(_nativeHandle, event.getPointerId(p),
+                        event.getX(p), event.getY(p));
+            }
+            touchFinishFrameNative(_nativeHandle, (int)event.getEventTime());
+        }   break;
+        case MotionEvent.ACTION_UP:
+        case MotionEvent.ACTION_POINTER_UP:
+            touchUpNative(_nativeHandle, (int)event.getEventTime(),
+                    event.getPointerId(event.getActionIndex()));
+            break;
+        case MotionEvent.ACTION_CANCEL:
+            touchCancelNative(_nativeHandle);
+            break;
+        }
+
+        return true;
     }
 
     static {

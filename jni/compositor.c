@@ -79,8 +79,24 @@ Java_net_jlekstrand_wheatley_Compositor_createNative(JNIEnv *env, jclass cls)
         goto err_compositor;
     }
 
+    wc->seat = wlb_seat_create(wc->compositor);
+    if (!wc->seat) {
+        ALOGD("Failed to create seat: %s", strerror(errno));
+        goto err_wlegl;
+    }
+
+    wc->touch = wlb_touch_create(wc->seat);
+    if (!wc->seat) {
+        ALOGD("Failed to create touch: %s", strerror(errno));
+        goto err_seat;
+    }
+
     return (long)(intptr_t)wc;
 
+err_seat:
+    wlb_seat_destroy(wc->seat);
+err_wlegl:
+    wlegl_destroy(wc->wlegl);
 err_compositor:
     wlb_compositor_destroy(wc->compositor);
 err_display:

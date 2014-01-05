@@ -166,3 +166,59 @@ Java_net_jlekstrand_wheatley_WaylandActivity_repaintFinishedNative(
     wlb_output_repaint_complete(wa->output.output, timestamp);
     wl_display_flush_clients(wa->compositor->display);
 }
+
+JNIEXPORT void JNICALL
+Java_net_jlekstrand_wheatley_WaylandActivity_touchDownNative(
+        JNIEnv *env, jclass cls, jlong nativeHandle,
+        jint time, jint id, jfloat x, jfloat y)
+{
+    struct wheatley_activity *wa =
+            (struct wheatley_activity *)(intptr_t)nativeHandle;
+
+    wlb_touch_down_on_output(wa->compositor->touch, time, id, wa->output.output,
+            wl_fixed_from_double(x), wl_fixed_from_double(y));
+}
+
+JNIEXPORT void JNICALL
+Java_net_jlekstrand_wheatley_WaylandActivity_touchMoveNative(
+        JNIEnv *env, jclass cls, jlong nativeHandle,
+        jint id, jfloat x, jfloat y)
+{
+    struct wheatley_activity *wa =
+            (struct wheatley_activity *)(intptr_t)nativeHandle;
+
+    wlb_touch_move_on_output(wa->compositor->touch, id, wa->output.output,
+            wl_fixed_from_double(x), wl_fixed_from_double(y));
+}
+
+JNIEXPORT void JNICALL
+Java_net_jlekstrand_wheatley_WaylandActivity_touchFinishFrameNative(
+        JNIEnv *env, jclass cls, jlong nativeHandle, jint time)
+{
+    struct wheatley_activity *wa =
+            (struct wheatley_activity *)(intptr_t)nativeHandle;
+
+    wlb_touch_finish_frame(wa->compositor->touch, time);
+}
+
+JNIEXPORT void JNICALL
+Java_net_jlekstrand_wheatley_WaylandActivity_touchUpNative(
+        JNIEnv *env, jclass cls, jlong nativeHandle, jint time, jint id)
+{
+    struct wheatley_activity *wa =
+            (struct wheatley_activity *)(intptr_t)nativeHandle;
+
+    wlb_touch_up(wa->compositor->touch, time, id);
+}
+
+JNIEXPORT void JNICALL
+Java_net_jlekstrand_wheatley_WaylandActivity_touchCancelNative(
+        JNIEnv *env, jclass cls, jlong nativeHandle)
+{
+    struct wheatley_activity *wa =
+            (struct wheatley_activity *)(intptr_t)nativeHandle;
+
+    wlb_touch_cancel(wa->compositor->touch);
+}
+
+// vim: ts=4 sw=4 sts=4 expandtab
