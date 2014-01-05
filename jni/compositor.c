@@ -9,29 +9,29 @@
 static int
 wlb_log_android_func(enum wlb_log_level level, const char *format, va_list ap)
 {
-	int priority;
+    int priority;
 
-	switch (level) {
-	case WLB_LOG_LEVEL_DEBUG:
-		priority = ANDROID_LOG_DEBUG;
-		break;
-	case WLB_LOG_LEVEL_WARNING:
-		priority = ANDROID_LOG_WARN;
-		break;
-	case WLB_LOG_LEVEL_ERROR:
-		priority = ANDROID_LOG_ERROR;
-		break;
-	default:
-		priority = ANDROID_LOG_UNKNOWN;
-	}
+    switch (level) {
+    case WLB_LOG_LEVEL_DEBUG:
+        priority = ANDROID_LOG_DEBUG;
+        break;
+    case WLB_LOG_LEVEL_WARNING:
+        priority = ANDROID_LOG_WARN;
+        break;
+    case WLB_LOG_LEVEL_ERROR:
+        priority = ANDROID_LOG_ERROR;
+        break;
+    default:
+        priority = ANDROID_LOG_UNKNOWN;
+    }
 
-	return __android_log_vprint(priority, "libwlb", format, ap);
+    return __android_log_vprint(priority, "libwlb", format, ap);
 }
 
 static void
 wl_debug_android_func(const char *format, va_list ap)
 {
-	__android_log_vprint(ANDROID_LOG_DEBUG, "wayland", format, ap);
+    __android_log_vprint(ANDROID_LOG_DEBUG, "wayland", format, ap);
 }
 
 JNIEXPORT jlong JNICALL
@@ -47,33 +47,33 @@ Java_net_jlekstrand_wheatley_Compositor_createNative(JNIEnv *env, jclass cls)
     memset(wc, 0, sizeof *wc);
 
     /* Pass libwlb and libwayland logging through to Android. */
-	wlb_log_set_func(wlb_log_android_func);
-	wl_debug_set_handler_server(wl_debug_android_func);
+    wlb_log_set_func(wlb_log_android_func);
+    wl_debug_set_handler_server(wl_debug_android_func);
 
     /* XXX: This should be removed at some point */
-	setenv("WAYLAND_DEBUG", "server", 1);
+    setenv("WAYLAND_DEBUG", "server", 1);
 
     /* XXX: This is hard-coded merely for testing purposes */
-	setenv("XDG_RUNTIME_DIR", "/data/data/net.jlekstrand.wheatley/", 1);
+    setenv("XDG_RUNTIME_DIR", "/data/data/net.jlekstrand.wheatley/", 1);
 
-	wc->display = wl_display_create();
+    wc->display = wl_display_create();
     if (!wc->display) {
         ALOGD("Failed to create display: %s", strerror(errno));
         goto err_alloc;
     }
 
-	wc->compositor = wlb_compositor_create(wc->display);
+    wc->compositor = wlb_compositor_create(wc->display);
     if (!wc->compositor) {
         ALOGD("Failed to create compositor: %s", strerror(errno));
         goto err_display;
     }
 
-	if (wl_display_init_shm(wc->display) < 0) {
+    if (wl_display_init_shm(wc->display) < 0) {
         ALOGD("Failed to initialize wl_shm: %s", strerror(errno));
         goto err_compositor;
     }
 
-	wc->wlegl = wlegl_create(wc->compositor);
+    wc->wlegl = wlegl_create(wc->compositor);
     if (!wc->wlegl) {
         ALOGD("Failed to initialize android_wlegl: %s", strerror(errno));
         goto err_compositor;
@@ -151,7 +151,7 @@ err_alloc:
 static int
 wheatley_compositor_ALooper_func(int fd, int events, void *data)
 {
-	struct wheatley_compositor *wc = data;
+    struct wheatley_compositor *wc = data;
     ALooper *looper = ALooper_forThread();
 
     if (!looper || looper != wc->looper) {
@@ -159,12 +159,12 @@ wheatley_compositor_ALooper_func(int fd, int events, void *data)
         return 0; /* Not the right looper */
     }
 
-	if (events & ALOOPER_EVENT_INPUT)
-		wl_event_loop_dispatch(wl_display_get_event_loop(wc->display), 0);
+    if (events & ALOOPER_EVENT_INPUT)
+        wl_event_loop_dispatch(wl_display_get_event_loop(wc->display), 0);
 
-	wl_display_flush_clients(wc->display);
+    wl_display_flush_clients(wc->display);
 
-	return 1;
+    return 1;
 }
 
 JNIEXPORT void JNICALL
@@ -188,7 +188,7 @@ Java_net_jlekstrand_wheatley_Compositor_addToLooperNative(JNIEnv *env,
         return;
     }
 
-	ALooper_addFd(looper,
+    ALooper_addFd(looper,
             wl_event_loop_get_fd(wl_display_get_event_loop(wc->display)),
             ALOOPER_POLL_CALLBACK, ALOOPER_EVENT_INPUT | ALOOPER_EVENT_OUTPUT,
             wheatley_compositor_ALooper_func, wc);
@@ -224,3 +224,5 @@ Java_net_jlekstrand_wheatley_Compositor_removeFromLooperNative(JNIEnv *env,
     ALooper_removeFd(looper, 
             wl_event_loop_get_fd(wl_display_get_event_loop(wc->display)));
 }
+
+// vim: ts=4 sw=4 sts=4 expandtab

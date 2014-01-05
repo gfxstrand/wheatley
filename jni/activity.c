@@ -8,8 +8,8 @@
 struct wheatley_activity {
     struct wheatley_compositor *compositor;
 
-	EGLDisplay egl_display;
-	struct wlb_gles2_renderer *renderer;
+    EGLDisplay egl_display;
+    struct wlb_gles2_renderer *renderer;
 
     struct {
         int32_t format, width, height;
@@ -23,9 +23,9 @@ wheatley_activity_init_egl(struct wheatley_activity *wa)
     if (wa->egl_display != EGL_NO_DISPLAY)
         return;
 
-	ALOGD("Initializing EGL");
-	wa->egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-	eglInitialize(wa->egl_display, 0, 0);
+    ALOGD("Initializing EGL");
+    wa->egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    eglInitialize(wa->egl_display, 0, 0);
 }
 
 void
@@ -34,8 +34,8 @@ wheatley_activity_finish_egl(struct wheatley_activity *wa)
     if (wa->egl_display == EGL_NO_DISPLAY)
         return;
 
-	ALOGD("Terminating EGL");
-	eglTerminate(wa->egl_display);
+    ALOGD("Terminating EGL");
+    eglTerminate(wa->egl_display);
     wa->egl_display = EGL_NO_DISPLAY;
 }
 
@@ -55,7 +55,7 @@ wheatley_activity_update_output(struct wheatley_activity *wa,
     wa->output.width = width;
     wa->output.height = height;
 
-	wlb_output_set_mode(wa->output.output, width, height, 60000);
+    wlb_output_set_mode(wa->output.output, width, height, 60000);
 }
 
 JNIEXPORT jlong JNICALL
@@ -103,7 +103,7 @@ Java_net_jlekstrand_wheatley_WaylandActivity_surfaceCreatedNative(JNIEnv *env,
 
     wheatley_activity_init_egl(wa);
 
-	wa->renderer = wlb_gles2_renderer_create_for_egl(
+    wa->renderer = wlb_gles2_renderer_create_for_egl(
             wa->compositor->compositor, wa->egl_display, NULL);
 
     window = ANativeWindow_fromSurface(env, jsurface);
@@ -113,12 +113,12 @@ Java_net_jlekstrand_wheatley_WaylandActivity_surfaceCreatedNative(JNIEnv *env,
         return;
     }
 
-	format = ANativeWindow_getFormat(window);
-	width = ANativeWindow_getWidth(window);
-	height = ANativeWindow_getHeight(window);
+    format = ANativeWindow_getFormat(window);
+    width = ANativeWindow_getWidth(window);
+    height = ANativeWindow_getHeight(window);
 
     wheatley_activity_update_output(wa, format, width, height);
-	wlb_gles2_renderer_add_egl_output(wa->renderer, wa->output.output, window);
+    wlb_gles2_renderer_add_egl_output(wa->renderer, wa->output.output, window);
 }
 
 JNIEXPORT void JNICALL
