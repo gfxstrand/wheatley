@@ -302,11 +302,13 @@ touch_create(int width, int height)
 	touch->display = wl_display_connect(NULL);
 	assert(touch->display);
 
+	LOGD("Fetching globals...");
 	touch->has_argb = 0;
 	touch->registry = wl_display_get_registry(touch->display);
 	wl_registry_add_listener(touch->registry, &registry_listener, touch);
 	wl_display_dispatch(touch->display);
 	wl_display_roundtrip(touch->display);
+	LOGD("Roundtrip complete.");
 
 	if (!touch->has_argb) {
 		LOGE("WL_SHM_FORMAT_ARGB32 not available\n");
@@ -320,21 +322,24 @@ touch_create(int width, int height)
 	create_shm_buffer(touch);
 
 	if (touch->fullscreen_shell) {
+		LOGD("Presenting surface via wl_fullscreen_shell");
 		wl_fullscreen_shell_present_surface(touch->fullscreen_shell,
 						    touch->surface,
 						    WL_FULLSCREEN_SHELL_PRESENT_METHOD_DEFAULT,
 						    0, NULL);
 	} else if (touch->shell) {
+		LOGD("Creating shell surface");
 		touch->shell_surface =
 			wl_shell_get_shell_surface(touch->shell,
 						   touch->surface);
 		wl_shell_surface_add_listener(touch->shell_surface,
 					      &shell_surface_listener, touch);
 		wl_shell_surface_set_toplevel(touch->shell_surface);
-	}
 
-	wl_surface_set_user_data(touch->surface, touch);
-	wl_shell_surface_set_title(touch->shell_surface, "simple-touch");
+		wl_surface_set_user_data(touch->surface, touch);
+		wl_shell_surface_set_title(touch->shell_surface,
+					   "simple-touch");
+	}
 
 	memset(touch->data, 64, width * height * 4);
 	wl_surface_attach(touch->surface, touch->buffer, 0, 0);
