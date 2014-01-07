@@ -221,4 +221,51 @@ Java_net_jlekstrand_wheatley_WaylandActivity_touchCancelNative(
     wlb_touch_cancel(wa->compositor->touch);
 }
 
+JNIEXPORT void JNICALL
+Java_net_jlekstrand_wheatley_WaylandActivity_pointerEnterNative(
+        JNIEnv *env, jclass cls, jlong nativeHandle, jfloat x, jfloat y)
+{
+    struct wheatley_activity *wa =
+            (struct wheatley_activity *)(intptr_t)nativeHandle;
+
+    wlb_pointer_enter_output(wa->compositor->pointer, wa->output.output,
+            wl_fixed_from_double(x), wl_fixed_from_double(y));
+}
+
+JNIEXPORT void JNICALL
+Java_net_jlekstrand_wheatley_WaylandActivity_pointerMotionNative(
+        JNIEnv *env, jclass cls, jlong nativeHandle, jint time,
+        jfloat x, jfloat y)
+{
+    struct wheatley_activity *wa =
+            (struct wheatley_activity *)(intptr_t)nativeHandle;
+
+    wlb_pointer_move_on_output(wa->compositor->pointer, time, wa->output.output,
+            wl_fixed_from_double(x), wl_fixed_from_double(y));
+}
+
+JNIEXPORT void JNICALL
+Java_net_jlekstrand_wheatley_WaylandActivity_pointerButtonNative(
+        JNIEnv *env, jclass cls, jlong nativeHandle, jint time,
+        jint button, jboolean pressed)
+{
+    struct wheatley_activity *wa =
+            (struct wheatley_activity *)(intptr_t)nativeHandle;
+
+    wlb_pointer_button(wa->compositor->pointer, time, button,
+            pressed ? WL_POINTER_BUTTON_STATE_PRESSED : WL_POINTER_BUTTON_STATE_RELEASED);
+}
+
+JNIEXPORT void JNICALL
+Java_net_jlekstrand_wheatley_WaylandActivity_pointerAxisNative(
+        JNIEnv *env, jclass cls, jlong nativeHandle, jint time,
+        jint axis, jfloat value)
+{
+    struct wheatley_activity *wa =
+            (struct wheatley_activity *)(intptr_t)nativeHandle;
+
+    wlb_pointer_button(wa->compositor->pointer,
+            time, axis, wl_fixed_from_double(value));
+}
+
 // vim: ts=4 sw=4 sts=4 expandtab

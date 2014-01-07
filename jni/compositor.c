@@ -91,8 +91,16 @@ Java_net_jlekstrand_wheatley_Compositor_createNative(JNIEnv *env, jclass cls)
         goto err_seat;
     }
 
+    wc->pointer = wlb_pointer_create(wc->seat);
+    if (!wc->seat) {
+        ALOGD("Failed to create pointer: %s", strerror(errno));
+        goto err_touch;
+    }
+
     return (long)(intptr_t)wc;
 
+err_touch:
+    wlb_touch_destroy(wc->touch);
 err_seat:
     wlb_seat_destroy(wc->seat);
 err_wlegl:

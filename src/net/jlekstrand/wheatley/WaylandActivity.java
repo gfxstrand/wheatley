@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Choreographer;
+import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -19,6 +20,15 @@ public class WaylandActivity extends Activity
         implements SurfaceHolder.Callback2
 {
     private static final String LOG_TAG = "wheatley:WaylandActivity";
+
+    private static final int WL_POINTER_AXIS_VERTICAL_SCROLL = 0;
+    private static final int WL_POINTER_AXIS_HORIZONTAL_SCROLL = 1;
+
+    private static final int BTN_LEFT = 0x110;
+    private static final int BTN_RIGHT = 0x111;
+    private static final int BTN_MIDDLE = 0x112;
+    private static final int BTN_FORWARD = 0x115;
+    private static final int BTN_BACK = 0x116;
 
     private long _nativeHandle;
 
@@ -34,6 +44,16 @@ public class WaylandActivity extends Activity
     private static native void repaintFinishedNative(long nativeHandle,
             int timestamp);
 
+    private static native void pointerEnterNative(long nativeHandle,
+            float x, float y);
+    private static native void pointerMotionNative(long nativeHandle,
+            int time, float x, float y);
+    private static native void pointerButtonNative(long nativeHandle,
+            int time, int button, boolean pressed);
+    private static native void pointerAxisNative(long nativeHandle,
+            int time, int axis, float value);
+    private static native void pointerLeaveNative(long nativeHandle);
+
     private static native void touchDownNative(long nativeHandle,
             int time, int id, float x, float y);
     private static native void touchMoveNative(long nativeHandle,
@@ -48,6 +68,8 @@ public class WaylandActivity extends Activity
     private Choreographer _choreographer;
     private SurfaceView _surfaceView;
     private Surface _surface;
+
+    private int pointerButtonState;
 
     private FramerateEstimator _rateEstimator;
 
@@ -88,6 +110,8 @@ public class WaylandActivity extends Activity
         _nativeHandle = createNative(_compositor.getNativeHandle());
 
         _repaintScheduled = false;
+
+        pointerButtonState = 0;
     }
 
     private final Choreographer.FrameCallback _repaintCallback = 
@@ -162,16 +186,105 @@ public class WaylandActivity extends Activity
         scheduleRepaint();
     }
 
+    public boolean onMouseEvent(MotionEvent event)
+    {
+        if ((event.getSource() & InputDevice.SOURCE_MOUSE) == 0)
+            return false;
+
+        switch (event.getActionMasked()) {
+        case MotionEvent.ACTION_HOVER_ENTER:
+            // Note that we never handle ACTION_HOVER_LEAVE. This is
+            // because, for some insane reason, Android thinks it needs to
+            // send one right before a button press.
+            pointerEnterNative(_nativeHandle, event.getX(), event.getY());
+            return true;
+        case MotionEvent.ACTION_MOVE:
+        case MotionEvent.ACTION_HOVER_MOVE:
+            pointerMotionNative(_nativeHandle, (int)event.getEventTime(),
+                    event.getX(), event.getY());
+            return true;
+        case MotionEvent.ACTION_DOWN: {
+            int buttons = event.getButtonState() & (~pointerButtonState);
+
+            if ((buttons & MotionEvent.BUTTON_PRIMARY) != 0)
+                pointerButtonNative(_nativeHandle, (int)event.getEventTime(),
+                        BTN_LEFT, true);
+
+            if ((buttons & MotionEvent.BUTTON_SECONDARY) != 0)
+                pointerButtonNative(_nativeHandle, (int)event.getEventTime(),
+                        BTN_RIGHT, true);
+
+            if ((buttons & MotionEvent.BUTTON_TERTIARY) != 0)
+                pointerButtonNative(_nativeHandle, (int)event.getEventTime(),
+                        BTN_MIDDLE, true);
+
+            if ((buttons & MotionEvent.BUTTON_BACK) != 0)
+                pointerButtonNative(_nativeHandle, (int)event.getEventTime(),
+                        BTN_BACK, true);
+
+            if ((buttons & MotionEvent.BUTTON_FORWARD) != 0)
+                pointerButtonNative(_nativeHandle, (int)event.getEventTime(),
+                        BTN_FORWARD, true);
+
+            pointerButtonState = event.getButtonState();
+        } return true;
+        case MotionEvent.ACTION_UP: {
+            int buttons = pointerButtonState & (~event.getButtonState());
+
+            if ((buttons & MotionEvent.BUTTON_PRIMARY) != 0)
+                pointerButtonNative(_nativeHandle, (int)event.getEventTime(),
+                        BTN_LEFT, false);
+
+            if ((buttons & MotionEvent.BUTTON_SECONDARY) != 0)
+                pointerButtonNative(_nativeHandle, (int)event.getEventTime(),
+                        BTN_RIGHT, false);
+
+            if ((buttons & MotionEvent.BUTTON_TERTIARY) != 0)
+                pointerButtonNative(_nativeHandle, (int)event.getEventTime(),
+                        BTN_MIDDLE, false);
+
+            if ((buttons & MotionEvent.BUTTON_BACK) != 0)
+                pointerButtonNative(_nativeHandle, (int)event.getEventTime(),
+                        BTN_BACK, false);
+
+            if ((buttons & MotionEvent.BUTTON_FORWARD) != 0)
+                pointerButtonNative(_nativeHandle, (int)event.getEventTime(),
+                        BTN_FORWARD, false);
+
+            pointerButtonState = event.getButtonState();
+        } return true;
+        case MotionEvent.ACTION_SCROLL: {
+            int time = (int)event.getEventTime();
+
+            float xval = event.getAxisValue(MotionEvent.AXIS_X);
+            if (xval != 0)
+                pointerAxisNative(_nativeHandle, time,
+                        WL_POINTER_AXIS_HORIZONTAL_SCROLL, xval);
+
+            float yval = event.getAxisValue(MotionEvent.AXIS_Y);
+            if (yval != 0)
+                pointerAxisNative(_nativeHandle, time,
+                        WL_POINTER_AXIS_VERTICAL_SCROLL, xval);
+
+        }   return true;
+        }
+
+        return false;
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event)
     {
+        if ((event.getSource() & InputDevice.SOURCE_MOUSE) != 0)
+            return onMouseEvent(event);
+
         switch (event.getActionMasked()) {
         case MotionEvent.ACTION_DOWN:
         case MotionEvent.ACTION_POINTER_DOWN: {
             final int idx = event.getActionIndex();
             touchDownNative(_nativeHandle, (int)event.getEventTime(),
                     event.getPointerId(idx), event.getX(idx), event.getY(idx));
-        }   break;
+        }   return true;
         case MotionEvent.ACTION_MOVE: {
             final int historySize = event.getHistorySize();
             final int pointerCount = event.getPointerCount();
@@ -193,18 +306,27 @@ public class WaylandActivity extends Activity
                         event.getX(p), event.getY(p));
             }
             touchFinishFrameNative(_nativeHandle, (int)event.getEventTime());
-        }   break;
+        }   return true;
         case MotionEvent.ACTION_UP:
         case MotionEvent.ACTION_POINTER_UP:
             touchUpNative(_nativeHandle, (int)event.getEventTime(),
                     event.getPointerId(event.getActionIndex()));
-            break;
+            return true;
         case MotionEvent.ACTION_CANCEL:
             touchCancelNative(_nativeHandle);
-            break;
+            return true;
         }
 
-        return true;
+        return false;
+    }
+
+    @Override
+    public boolean onGenericMotionEvent(MotionEvent event)
+    {
+        if ((event.getSource() & InputDevice.SOURCE_MOUSE) != 0)
+            return onMouseEvent(event);
+
+        return false;
     }
 
     static {
