@@ -10,11 +10,6 @@ struct wheatley_activity {
 
     EGLDisplay egl_display;
     struct wlb_gles2_renderer *renderer;
-
-    struct {
-        int32_t format, width, height;
-	    struct wlb_output *output;
-    } output;
 };
 
 void
@@ -37,25 +32,6 @@ wheatley_activity_finish_egl(struct wheatley_activity *wa)
     ALOGD("Terminating EGL");
     eglTerminate(wa->egl_display);
     wa->egl_display = EGL_NO_DISPLAY;
-}
-
-void
-wheatley_activity_update_output(struct wheatley_activity *wa,
-        int32_t format, int32_t width, int32_t height)
-{
-    if (wa->output.output &&
-            wa->output.width == width && wa->output.height == height)
-        return;
-
-    if (!wa->output.output) {
-        wa->output.output = wlb_output_create(wa->compositor->compositor,
-                100, 60, "Android", "none");
-    }
-
-    wa->output.width = width;
-    wa->output.height = height;
-
-    wlb_output_set_mode(wa->output.output, width, height, 60000);
 }
 
 JNIEXPORT jlong JNICALL
@@ -94,12 +70,12 @@ Java_net_jlekstrand_wheatley_WaylandActivity_destroyNative(JNIEnv *env,
 
 JNIEXPORT void JNICALL
 Java_net_jlekstrand_wheatley_WaylandActivity_surfaceCreatedNative(JNIEnv *env,
-        jclass cls, jlong nativeHandle, jobject jsurface)
+        jclass cls, jlong nativeHandle, jlong outputHandle, jobject jsurface)
 {
     struct wheatley_activity *wa =
             (struct wheatley_activity *)(intptr_t)nativeHandle;
+    struct wlb_output *output = (struct wlb_output *)(intptr_t)outputHandle;
     ANativeWindow *window;
-    int32_t format, width, height;
 
     wheatley_activity_init_egl(wa);
 
@@ -113,22 +89,7 @@ Java_net_jlekstrand_wheatley_WaylandActivity_surfaceCreatedNative(JNIEnv *env,
         return;
     }
 
-    format = ANativeWindow_getFormat(window);
-    width = ANativeWindow_getWidth(window);
-    height = ANativeWindow_getHeight(window);
-
-    wheatley_activity_update_output(wa, format, width, height);
-    wlb_gles2_renderer_add_egl_output(wa->renderer, wa->output.output, window);
-}
-
-JNIEXPORT void JNICALL
-Java_net_jlekstrand_wheatley_WaylandActivity_surfaceChangedNative(JNIEnv *env,
-        jclass cls, jlong nativeHandle, jint format, jint width, jint height)
-{
-    struct wheatley_activity *wa =
-            (struct wheatley_activity *)(intptr_t)nativeHandle;
-
-    wheatley_activity_update_output(wa, format, width, height);
+    wlb_gles2_renderer_add_egl_output(wa->renderer, output, window);
 }
 
 JNIEXPORT void JNICALL
@@ -138,134 +99,36 @@ Java_net_jlekstrand_wheatley_WaylandActivity_surfaceDestroyedNative(JNIEnv *env,
     struct wheatley_activity *wa =
             (struct wheatley_activity *)(intptr_t)nativeHandle;
 
-    wlb_gles2_renderer_destroy(wa->renderer);
-    wa->renderer = NULL;
+    if (wa->renderer) {
+        wlb_gles2_renderer_destroy(wa->renderer);
+        wa->renderer = NULL;
+    }
 }
 
 JNIEXPORT void JNICALL
 Java_net_jlekstrand_wheatley_WaylandActivity_repaintNative(
-        JNIEnv *env, jclass cls, jlong nativeHandle, jboolean forceRepaint)
+        JNIEnv *env, jclass cls, jlong nativeHandle, jlong outputHandle,
+        jboolean forceRepaint)
 {
     struct wheatley_activity *wa =
             (struct wheatley_activity *)(intptr_t)nativeHandle;
+    struct wlb_output *output = (struct wlb_output *)(intptr_t)outputHandle;
 
-    if (wa->output.output == NULL)
-        return;
-
-    if (forceRepaint || wlb_output_needs_repaint(wa->output.output))
-        wlb_gles2_renderer_repaint_output(wa->renderer, wa->output.output);
+    if (forceRepaint || wlb_output_needs_repaint(output))
+        wlb_gles2_renderer_repaint_output(wa->renderer, output);
 }
 
 JNIEXPORT void JNICALL
 Java_net_jlekstrand_wheatley_WaylandActivity_repaintFinishedNative(
-        JNIEnv *env, jclass cls, jlong nativeHandle, jint timestamp)
+        JNIEnv *env, jclass cls, jlong nativeHandle, jlong outputHandle,
+        jint timestamp)
 {
     struct wheatley_activity *wa =
             (struct wheatley_activity *)(intptr_t)nativeHandle;
+    struct wlb_output *output = (struct wlb_output *)(intptr_t)outputHandle;
 
-    wlb_output_repaint_complete(wa->output.output, timestamp);
+    wlb_output_repaint_complete(output, timestamp);
     wl_display_flush_clients(wa->compositor->display);
-}
-
-JNIEXPORT void JNICALL
-Java_net_jlekstrand_wheatley_WaylandActivity_touchDownNative(
-        JNIEnv *env, jclass cls, jlong nativeHandle,
-        jint time, jint id, jfloat x, jfloat y)
-{
-    struct wheatley_activity *wa =
-            (struct wheatley_activity *)(intptr_t)nativeHandle;
-
-    wlb_touch_down_on_output(wa->compositor->touch, time, id, wa->output.output,
-            wl_fixed_from_double(x), wl_fixed_from_double(y));
-}
-
-JNIEXPORT void JNICALL
-Java_net_jlekstrand_wheatley_WaylandActivity_touchMoveNative(
-        JNIEnv *env, jclass cls, jlong nativeHandle,
-        jint id, jfloat x, jfloat y)
-{
-    struct wheatley_activity *wa =
-            (struct wheatley_activity *)(intptr_t)nativeHandle;
-
-    wlb_touch_move_on_output(wa->compositor->touch, id, wa->output.output,
-            wl_fixed_from_double(x), wl_fixed_from_double(y));
-}
-
-JNIEXPORT void JNICALL
-Java_net_jlekstrand_wheatley_WaylandActivity_touchFinishFrameNative(
-        JNIEnv *env, jclass cls, jlong nativeHandle, jint time)
-{
-    struct wheatley_activity *wa =
-            (struct wheatley_activity *)(intptr_t)nativeHandle;
-
-    wlb_touch_finish_frame(wa->compositor->touch, time);
-}
-
-JNIEXPORT void JNICALL
-Java_net_jlekstrand_wheatley_WaylandActivity_touchUpNative(
-        JNIEnv *env, jclass cls, jlong nativeHandle, jint time, jint id)
-{
-    struct wheatley_activity *wa =
-            (struct wheatley_activity *)(intptr_t)nativeHandle;
-
-    wlb_touch_up(wa->compositor->touch, time, id);
-}
-
-JNIEXPORT void JNICALL
-Java_net_jlekstrand_wheatley_WaylandActivity_touchCancelNative(
-        JNIEnv *env, jclass cls, jlong nativeHandle)
-{
-    struct wheatley_activity *wa =
-            (struct wheatley_activity *)(intptr_t)nativeHandle;
-
-    wlb_touch_cancel(wa->compositor->touch);
-}
-
-JNIEXPORT void JNICALL
-Java_net_jlekstrand_wheatley_WaylandActivity_pointerEnterNative(
-        JNIEnv *env, jclass cls, jlong nativeHandle, jfloat x, jfloat y)
-{
-    struct wheatley_activity *wa =
-            (struct wheatley_activity *)(intptr_t)nativeHandle;
-
-    wlb_pointer_enter_output(wa->compositor->pointer, wa->output.output,
-            wl_fixed_from_double(x), wl_fixed_from_double(y));
-}
-
-JNIEXPORT void JNICALL
-Java_net_jlekstrand_wheatley_WaylandActivity_pointerMotionNative(
-        JNIEnv *env, jclass cls, jlong nativeHandle, jint time,
-        jfloat x, jfloat y)
-{
-    struct wheatley_activity *wa =
-            (struct wheatley_activity *)(intptr_t)nativeHandle;
-
-    wlb_pointer_move_on_output(wa->compositor->pointer, time, wa->output.output,
-            wl_fixed_from_double(x), wl_fixed_from_double(y));
-}
-
-JNIEXPORT void JNICALL
-Java_net_jlekstrand_wheatley_WaylandActivity_pointerButtonNative(
-        JNIEnv *env, jclass cls, jlong nativeHandle, jint time,
-        jint button, jboolean pressed)
-{
-    struct wheatley_activity *wa =
-            (struct wheatley_activity *)(intptr_t)nativeHandle;
-
-    wlb_pointer_button(wa->compositor->pointer, time, button,
-            pressed ? WL_POINTER_BUTTON_STATE_PRESSED : WL_POINTER_BUTTON_STATE_RELEASED);
-}
-
-JNIEXPORT void JNICALL
-Java_net_jlekstrand_wheatley_WaylandActivity_pointerAxisNative(
-        JNIEnv *env, jclass cls, jlong nativeHandle, jint time,
-        jint axis, jfloat value)
-{
-    struct wheatley_activity *wa =
-            (struct wheatley_activity *)(intptr_t)nativeHandle;
-
-    wlb_pointer_button(wa->compositor->pointer,
-            time, axis, wl_fixed_from_double(value));
 }
 
 // vim: ts=4 sw=4 sts=4 expandtab

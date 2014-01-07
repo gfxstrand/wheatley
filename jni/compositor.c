@@ -35,7 +35,8 @@ wl_debug_android_func(const char *format, va_list ap)
 }
 
 JNIEXPORT jlong JNICALL
-Java_net_jlekstrand_wheatley_Compositor_createNative(JNIEnv *env, jclass cls)
+Java_net_jlekstrand_wheatley_wayland_Compositor_createNative(JNIEnv *env,
+        jclass cls)
 {
     struct wheatley_compositor *wc;
 
@@ -79,32 +80,8 @@ Java_net_jlekstrand_wheatley_Compositor_createNative(JNIEnv *env, jclass cls)
         goto err_compositor;
     }
 
-    wc->seat = wlb_seat_create(wc->compositor);
-    if (!wc->seat) {
-        ALOGD("Failed to create seat: %s", strerror(errno));
-        goto err_wlegl;
-    }
-
-    wc->touch = wlb_touch_create(wc->seat);
-    if (!wc->seat) {
-        ALOGD("Failed to create touch: %s", strerror(errno));
-        goto err_seat;
-    }
-
-    wc->pointer = wlb_pointer_create(wc->seat);
-    if (!wc->seat) {
-        ALOGD("Failed to create pointer: %s", strerror(errno));
-        goto err_touch;
-    }
-
     return (long)(intptr_t)wc;
 
-err_touch:
-    wlb_touch_destroy(wc->touch);
-err_seat:
-    wlb_seat_destroy(wc->seat);
-err_wlegl:
-    wlegl_destroy(wc->wlegl);
 err_compositor:
     wlb_compositor_destroy(wc->compositor);
 err_display:
@@ -117,8 +94,8 @@ err_alloc:
 }
 
 JNIEXPORT void JNICALL
-Java_net_jlekstrand_wheatley_Compositor_destroyNative(JNIEnv *env, jclass cls,
-        jlong nativeHandle)
+Java_net_jlekstrand_wheatley_wayland_Compositor_destroyNative(JNIEnv *env,
+        jclass cls, jlong nativeHandle)
 {
     struct wheatley_compositor *wc =
             (struct wheatley_compositor *)(intptr_t)nativeHandle;
@@ -130,7 +107,7 @@ Java_net_jlekstrand_wheatley_Compositor_destroyNative(JNIEnv *env, jclass cls,
 }
 
 JNIEXPORT void JNICALL
-Java_net_jlekstrand_wheatley_Compositor_launchClientNative(JNIEnv *env,
+Java_net_jlekstrand_wheatley_wayland_Compositor_launchClientNative(JNIEnv *env,
         jclass cls, jlong nativeHandle, jbyteArray jcommand)
 {
     struct wheatley_compositor *wc =
@@ -192,7 +169,7 @@ wheatley_compositor_ALooper_func(int fd, int events, void *data)
 }
 
 JNIEXPORT void JNICALL
-Java_net_jlekstrand_wheatley_Compositor_addToLooperNative(JNIEnv *env,
+Java_net_jlekstrand_wheatley_wayland_Compositor_addToLooperNative(JNIEnv *env,
         jclass cls, jlong nativeHandle)
 {
     struct wheatley_compositor *wc =
@@ -221,8 +198,8 @@ Java_net_jlekstrand_wheatley_Compositor_addToLooperNative(JNIEnv *env,
 }
 
 JNIEXPORT void JNICALL
-Java_net_jlekstrand_wheatley_Compositor_removeFromLooperNative(JNIEnv *env,
-        jclass cls, jlong nativeHandle)
+Java_net_jlekstrand_wheatley_wayland_Compositor_removeFromLooperNative(
+        JNIEnv *env, jclass cls, jlong nativeHandle)
 {
     struct wheatley_compositor *wc =
             (struct wheatley_compositor *)(intptr_t)nativeHandle;

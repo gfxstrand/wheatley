@@ -25,8 +25,12 @@ LOCAL_SRC_FILES :=			\
 	wlegl_buffer.c			\
 	jni_util.c			\
 	compositor.c			\
+	output.c			\
+	seat.c				\
+	touch.c				\
+	pointer.c			\
 	activity.c
-#	WaylandActivity.c
+
 LOCAL_C_INCLUDES = android_headers
 LOCAL_STATIC_LIBRARIES := android_native_app_glue wlb
 

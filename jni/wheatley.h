@@ -26,10 +26,6 @@ struct wheatley_compositor {
     struct wlb_compositor *compositor;
     struct wlegl *wlegl;
 
-    struct wlb_seat *seat;
-    struct wlb_touch *touch;
-    struct wlb_pointer *pointer;
-
     ALooper *looper;
 };
 
