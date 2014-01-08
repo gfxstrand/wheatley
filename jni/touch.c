@@ -18,8 +18,6 @@
  * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  * OF THIS SOFTWARE.
- *
- * vim: ts=4 sw=4 sts=4 expandtab
  */
 #define LOG_TAG "wayland.Touch"
 #include "wheatley.h"
@@ -104,3 +102,5 @@ Java_net_jlekstrand_wheatley_wayland_Touch_cancelNative(JNIEnv *env,
 
     wlb_touch_cancel(touch);
 }
+
+/* vim: set ts=4 sw=4 sts=4 expandtab: */

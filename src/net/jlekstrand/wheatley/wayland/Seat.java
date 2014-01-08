@@ -18,8 +18,6 @@
  * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  * OF THIS SOFTWARE.
- *
- * vim: ts=4 sw=4 sts=4 expandtab
  */
 package net.jlekstrand.wheatley.wayland;
 
@@ -51,3 +49,5 @@ public class Seat
         super.finalize();
     }
 }
+
+// vim: set ts=4 sw=4 sts=4 expandtab:

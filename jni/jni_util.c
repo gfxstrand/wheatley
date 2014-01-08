@@ -18,8 +18,6 @@
  * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  * OF THIS SOFTWARE.
- *
- * vim: ts=4 sw=4 sts=4 expandtab
  */
 #include "jni_util.h"
 
@@ -36,3 +34,5 @@ jni_util_throw_by_name(JNIEnv *env, const char *name, const char *message)
 
     (*env)->DeleteLocalRef(env, cls);
 }
+
+/* vim: set ts=4 sw=4 sts=4 expandtab: */

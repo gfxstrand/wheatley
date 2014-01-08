@@ -18,8 +18,6 @@
  * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  * OF THIS SOFTWARE.
- *
- * vim: ts=4 sw=4 sts=4 expandtab
  */
 #define LOG_TAG "wayland.Pointer"
 #include "wheatley.h"
@@ -104,3 +102,5 @@ Java_net_jlekstrand_wheatley_wayland_Pointer_axisNative(JNIEnv *env,
     if (fy != 0)
         wlb_pointer_axis(pointer, time, WL_POINTER_AXIS_VERTICAL_SCROLL, fy);
 }
+
+/* vim: set ts=4 sw=4 sts=4 expandtab: */

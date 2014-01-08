@@ -18,8 +18,6 @@
  * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  * OF THIS SOFTWARE.
- *
- * vim: ts=4 sw=4 sts=4 expandtab
  */
 #define LOG_TAG "wheatley:WaylandCompositor"
 #include "wheatley.h"
@@ -248,3 +246,5 @@ Java_net_jlekstrand_wheatley_wayland_Compositor_removeFromLooperNative(
     ALooper_removeFd(looper, 
             wl_event_loop_get_fd(wl_display_get_event_loop(wc->display)));
 }
+
+/* vim: set ts=4 sw=4 sts=4 expandtab: */
