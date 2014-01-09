@@ -48,23 +48,32 @@ public class Pointer
     private static native void axisNative(long nativeHandle, int time,
             float xval, float yval);
 
+    private boolean _entered;
     private int _buttonState;
 
     Pointer(Seat seat)
     {
         _nativeHandle = createNative(seat.getNativeHandle());
+        _entered = false;
         _buttonState = 0;
     }
 
     private void handleEnter(MotionEvent event, Output output)
     {
+        if (_entered)
+            return; /* Only send once */
+
         enterOutputNative(_nativeHandle, output.getNativeHandle(),
                 event.getX(), event.getY());
+        _entered = true;
     }
 
     private void handleMove(MotionEvent event, Output output)
     {
         final int historySize = event.getHistorySize();
+
+        if (!_entered)
+            handleEnter(event, output);
 
         for (int h = 0; h < historySize; h++) {
             moveOnOutputNative(_nativeHandle,
@@ -76,9 +85,12 @@ public class Pointer
                 output.getNativeHandle(), event.getX(), event.getY());
     }
 
-    private void handleButton(MotionEvent event, boolean pressed)
+    private void handleButton(MotionEvent event, Output output, boolean pressed)
     {
         final int buttons;
+
+        if (!_entered)
+            handleEnter(event, output);
 
         if (pressed)
             buttons = event.getButtonState() & (~_buttonState);
@@ -105,9 +117,12 @@ public class Pointer
         _buttonState = event.getButtonState();
     }
 
-    private void handleAxis(MotionEvent event)
+    private void handleAxis(MotionEvent event, Output output)
     {
         final int historySize = event.getHistorySize();
+
+        if (!_entered)
+            handleEnter(event, output);
 
         for (int h = 0; h < historySize; h++)
             axisNative(_nativeHandle, (int)event.getHistoricalEventTime(h),
@@ -142,13 +157,13 @@ public class Pointer
             handleMove(event, output);
             return true;
         case MotionEvent.ACTION_DOWN:
-            handleButton(event, true);
+            handleButton(event, output, true);
             return true;
         case MotionEvent.ACTION_UP:
-            handleButton(event, false);
+            handleButton(event, output, false);
             return true;
         case MotionEvent.ACTION_SCROLL:
-            handleAxis(event);
+            handleAxis(event, output);
             return true;
         case MotionEvent.ACTION_HOVER_EXIT:
             handleLeave(event);

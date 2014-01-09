@@ -54,6 +54,7 @@ public class Compositor
     Seat _seat;
     Touch _touch;
     Pointer _pointer;
+    Keyboard _keyboard;
 
     public Compositor(Context context)
     {
@@ -66,6 +67,7 @@ public class Compositor
         _seat = new Seat(this);
         _touch = new Touch(_seat);
         _pointer = new Pointer(_seat);
+        _keyboard = new Keyboard(_seat);
     }
 
     public Compositor(Context context, Client client)
@@ -116,7 +118,7 @@ public class Compositor
 
     public boolean onKeyEvent(KeyEvent event)
     {
-        return false;
+        return _keyboard.onKeyEvent(event);
     }
 
     @Override

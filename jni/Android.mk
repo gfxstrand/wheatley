@@ -29,6 +29,7 @@ LOCAL_SRC_FILES :=			\
 	seat.c				\
 	touch.c				\
 	pointer.c			\
+	keyboard.c			\
 	activity.c
 
 LOCAL_C_INCLUDES = android_headers

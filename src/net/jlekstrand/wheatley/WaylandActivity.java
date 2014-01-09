@@ -30,6 +30,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Choreographer;
 import android.view.InputDevice;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -180,21 +181,42 @@ public class WaylandActivity extends Activity
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event)
+    public boolean dispatchTouchEvent(MotionEvent event)
     {
+        boolean consumed = false;
         if (_compositor != null)
-            return _compositor.onMotionEvent(event);
+            consumed = _compositor.onMotionEvent(event);
+
+        if (consumed)
+            return true;
         else
-            return false;
+            return super.dispatchTouchEvent(event);
     }
 
     @Override
-    public boolean onGenericMotionEvent(MotionEvent event)
+    public boolean dispatchGenericMotionEvent(MotionEvent event)
     {
+        boolean consumed = false;
         if (_compositor != null)
-            return _compositor.onMotionEvent(event);
+            consumed = _compositor.onMotionEvent(event);
+
+        if (consumed)
+            return true;
         else
-            return false;
+            return super.dispatchGenericMotionEvent(event);
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event)
+    {
+        boolean consumed = false;
+        if (_compositor != null)
+            consumed = _compositor.onKeyEvent(event);
+
+        if (consumed)
+            return true;
+        else
+            return super.dispatchKeyEvent(event);
     }
 
     static {
