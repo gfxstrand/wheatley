@@ -68,8 +68,10 @@ Java_net_jlekstrand_wheatley_wayland_Keyboard_handleKeyNative(JNIEnv *env,
     uint32_t key;
 
     key = convert_keycode(keyCode);
-    if (key == 0)
+    if (key == 0) {
+        ALOGD("Unknown keycode: %d", keyCode);
         return JNI_FALSE;
+    }
 
     wlb_keyboard_key(keyboard, time, key,
             pressed ? WL_KEYBOARD_KEY_STATE_PRESSED : WL_KEYBOARD_KEY_STATE_RELEASED);
