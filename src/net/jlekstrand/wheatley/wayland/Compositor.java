@@ -103,9 +103,9 @@ public class Compositor
 
     private boolean onMotionEvent(MotionEvent event, Output output)
     {
-        if ((event.getSource() & InputDevice.SOURCE_MOUSE) != 0)
+        if (event.getSource() == InputDevice.SOURCE_MOUSE)
             return _pointer.onMotionEvent(event, output);
-        else if ((event.getSource() & InputDevice.SOURCE_TOUCHSCREEN) != 0)
+        else if (event.getSource() == InputDevice.SOURCE_TOUCHSCREEN)
             return _touch.onTouchEvent(event, output);
 
         return false;
