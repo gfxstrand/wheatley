@@ -98,6 +98,11 @@ convert_keycode(jint keycode)
     case AKEYCODE_8: return KEY_8;
     case AKEYCODE_9: return KEY_9;
 
+    case AKEYCODE_DPAD_UP: return KEY_UP;
+    case AKEYCODE_DPAD_DOWN: return KEY_DOWN;
+    case AKEYCODE_DPAD_LEFT: return KEY_LEFT;
+    case AKEYCODE_DPAD_RIGHT: return KEY_RIGHT;
+
     case AKEYCODE_VOLUME_UP: return KEY_VOLUMEUP;
     case AKEYCODE_VOLUME_DOWN: return KEY_VOLUMEDOWN;
 
