@@ -35,6 +35,7 @@ import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 
 import net.jlekstrand.wheatley.wayland.Compositor;
 import net.jlekstrand.wheatley.wayland.Output;
@@ -61,7 +62,6 @@ public class WaylandActivity extends Activity
     private Compositor _compositor;
     private Output _output;
     private Choreographer _choreographer;
-    private SurfaceView _surfaceView;
     private Surface _surface;
 
     private FramerateEstimator _rateEstimator;
@@ -76,9 +76,8 @@ public class WaylandActivity extends Activity
 
         Intent intent = getIntent();
 
-        _surfaceView = new SurfaceView(this);
-        _surfaceView.getHolder().addCallback(this);
-        setContentView(_surfaceView);
+        setContentView(new View(this));
+        getWindow().takeSurface(this);
 
         _choreographer = Choreographer.getInstance();
 
