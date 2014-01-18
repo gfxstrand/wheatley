@@ -114,7 +114,7 @@ wlegl_create(struct wlb_compositor *compositor)
 	err = gralloc_open((const struct hw_module_t *)wlegl->gralloc,
 			   &wlegl->alloc);
 	if (err) {
-		ALOGE("Failed to open gralloc: %d\n", strerror(-err));
+		ALOGE("Failed to open gralloc: %s\n", strerror(-err));
 		goto err_alloc;
 	}
 
