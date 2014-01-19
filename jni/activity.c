@@ -135,6 +135,8 @@ Java_net_jlekstrand_wheatley_WaylandActivity_repaintNative(
             (struct wheatley_activity *)(intptr_t)nativeHandle;
     struct wlb_output *output = (struct wlb_output *)(intptr_t)outputHandle;
 
+    wlb_output_prepare_frame(output);
+
     if (forceRepaint || wlb_output_needs_repaint(output))
         wlb_gles2_renderer_repaint_output(wa->renderer, output);
 }
@@ -148,8 +150,7 @@ Java_net_jlekstrand_wheatley_WaylandActivity_repaintFinishedNative(
             (struct wheatley_activity *)(intptr_t)nativeHandle;
     struct wlb_output *output = (struct wlb_output *)(intptr_t)outputHandle;
 
-    wlb_output_repaint_complete(output, timestamp);
-    wl_display_flush_clients(wa->compositor->display);
+    wlb_output_frame_complete(output, timestamp);
 }
 
 /* vim: set ts=4 sw=4 sts=4 expandtab: */
