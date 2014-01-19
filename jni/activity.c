@@ -72,6 +72,8 @@ Java_net_jlekstrand_wheatley_WaylandActivity_createNative(JNIEnv *env,
 
     wa->compositor = wc;
     wa->egl_display = EGL_NO_DISPLAY;
+
+    return wa;
 }
 
 JNIEXPORT void JNICALL
