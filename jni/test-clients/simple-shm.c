@@ -66,6 +66,7 @@ struct window {
 	struct buffer buffers[2];
 	struct buffer *prev_buffer;
 	struct wl_callback *callback;
+	uint32_t benchmark_time, frames;
 };
 
 static void
@@ -210,6 +211,9 @@ window_next_buffer(struct window *window)
 		return NULL;
 
 	if (!buffer->buffer) {
+		if (buffer == &window->buffers[1])
+			LOGD("First buffer still in use; double-buffering.");
+
 		ret = create_shm_buffer(window->display, buffer,
 					window->width, window->height,
 					WL_SHM_FORMAT_XRGB8888);
@@ -278,12 +282,28 @@ redraw(void *data, struct wl_callback *callback, uint32_t time)
 {
 	struct window *window = data;
 	struct buffer *buffer;
+	struct timeval tv;
+	uint32_t wall_time;
+	static const int32_t speed_div = 5, benchmark_interval = 5;
 
 	buffer = window_next_buffer(window);
 	if (!buffer) {
 		LOGE(!callback ? "Failed to create the first buffer.\n" :
 		     "Both buffers busy at redraw(). Server bug?\n");
 		abort();
+	}
+
+	gettimeofday(&tv, NULL);
+	wall_time = tv.tv_sec * 1000 + tv.tv_usec / 1000;
+	if (window->frames == 0)
+		window->benchmark_time = wall_time;
+	if (wall_time - window->benchmark_time > (benchmark_interval * 1000)) {
+		LOGD("%d frames in %d seconds: %f fps\n",
+		     window->frames,
+		     benchmark_interval,
+		     (float) window->frames / benchmark_interval);
+		window->benchmark_time = wall_time;
+		window->frames = 0;
 	}
 
 	paint_pixels(buffer->shm_data, 20, window->width, window->height, time);
@@ -299,6 +319,8 @@ redraw(void *data, struct wl_callback *callback, uint32_t time)
 	wl_callback_add_listener(window->callback, &frame_listener, window);
 	wl_surface_commit(window->surface);
 	buffer->busy = 1;
+
+	window->frames++;
 }
 
 static const struct wl_callback_listener frame_listener = {
