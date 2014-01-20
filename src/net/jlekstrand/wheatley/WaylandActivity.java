@@ -65,6 +65,7 @@ public class WaylandActivity extends Activity
     private Surface _surface;
 
     private FramerateEstimator _rateEstimator;
+    private FramerateLogger _rateLogger;
 
     private boolean _repaintScheduled;
 
@@ -83,6 +84,7 @@ public class WaylandActivity extends Activity
 
         // Estimate the framerate based on the past 10 frames
         _rateEstimator = new FramerateEstimator(10);
+        _rateLogger = new FramerateLogger(5000000000L, 1000000000L);
 
         Uri clientUri = intent.getData();
         if (clientUri == null) {
@@ -119,6 +121,7 @@ public class WaylandActivity extends Activity
 
                 repaintNative(_nativeHandle, _output.getNativeHandle(), false);
 
+                _rateLogger.frame(frameTimeNanos);
                 _rateEstimator.addFrameTime(frameTimeNanos);
                 long nextTime = frameTimeNanos + _rateEstimator.getEstimate();
                 repaintFinishedNative(_nativeHandle, _output.getNativeHandle(),
