@@ -21,8 +21,6 @@
  */
 package net.jlekstrand.wheatley;
 
-import java.lang.reflect.Field;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
