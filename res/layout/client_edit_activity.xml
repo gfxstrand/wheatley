@@ -23,10 +23,16 @@
                 android:hint="Title" />
     </LinearLayout>
     <EditText
-        android:id="@+id/command"
-        android:layout_width="fill_parent"
-        android:layout_height="48dp"
-        android:hint="Command" />
+            android:id="@+id/command"
+            android:layout_width="fill_parent"
+            android:layout_height="48dp"
+            android:hint="Command" />
+    <CheckBox
+            android:id="@+id/root_checkbox"
+            android:layout_width="fill_parent"
+            android:layout_height="48dp"
+            android:onClick="onRunAsRootClicked"
+            android:text="@string/run_as_root" />
     <LinearLayout
             android:orientation="horizontal"
             android:layout_width="fill_parent"
@@ -47,3 +53,4 @@
                 android:text="Save" />
     </LinearLayout>
 </LinearLayout>
+<!-- vim: set ts=4 sw=4 sts=4 expandtab: -->

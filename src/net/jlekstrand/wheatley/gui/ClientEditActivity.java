@@ -22,6 +22,8 @@
 package net.jlekstrand.wheatley.gui;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -31,6 +33,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 
@@ -52,6 +55,7 @@ public class ClientEditActivity extends Activity
     EditText _titleEdit;
     ImageView _iconView;
     EditText _commandEdit;
+    CheckBox _rootCheckBox;
 
     public void onCreate(Bundle savedInstanceState)
     {
@@ -67,6 +71,7 @@ public class ClientEditActivity extends Activity
         _titleEdit = (EditText)findViewById(R.id.title);
         _iconView = (ImageView)findViewById(R.id.icon);
         _commandEdit = (EditText)findViewById(R.id.command);
+        _rootCheckBox = (CheckBox)findViewById(R.id.root_checkbox);
 
         DatabaseHelper helper = new DatabaseHelper(this);
         _database = helper.getReadableDatabase();
@@ -80,6 +85,7 @@ public class ClientEditActivity extends Activity
         } else {
             _titleEdit.setText(_client.getTitle());
             _commandEdit.setText(_client.getCommand());
+            _rootCheckBox.setChecked(_client.getRunAsRoot());
 
             Bitmap icon = _client.getIcon();
             if (icon == null) {
@@ -132,6 +138,39 @@ public class ClientEditActivity extends Activity
         Bitmap icon = (Bitmap)extras.getParcelable("data");
         _client.setIcon(icon);
         _iconView.setImageBitmap(icon);
+    }
+
+    private DialogInterface.OnClickListener _runAsRootDialogListener = 
+            new DialogInterface.OnClickListener()
+    {
+        @Override
+        public void onClick(DialogInterface dialog, int which)
+        {
+            switch (which) {
+            case DialogInterface.BUTTON_POSITIVE:
+                _client.setRunAsRoot(true);
+                return;
+            case DialogInterface.BUTTON_NEGATIVE:
+                _rootCheckBox.setChecked(false);
+            }
+        }
+    };
+
+    public void onRunAsRootClicked(View view)
+    {
+        Log.d(LOG_TAG, "onRunAsRoot()");
+
+        boolean checked = ((CheckBox) view).isChecked();
+
+        if (checked) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(R.string.are_you_sure_root)
+                    .setPositiveButton(R.string.yes, _runAsRootDialogListener)
+                    .setNegativeButton(R.string.no, _runAsRootDialogListener)
+                    .show();
+        } else {
+            _client.setRunAsRoot(false);
+        }
     }
 
     public void onCancelClicked(View view)

@@ -2,4 +2,8 @@
 <resources>
     <string name="app_name">Wheatley</string>
     <string name="action_add_client">Add client</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="run_as_root">Run as root</string>
+    <string name="are_you_sure_root">Are you sure you want this program to run as root?</string>
 </resources>
