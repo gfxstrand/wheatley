@@ -31,7 +31,7 @@ public class DatabaseHelper extends SQLiteOpenHelper
     private static final String LOG_TAG = "wheatley:ClientDatabaseHelper";
 
     public static final String DATABASE_NAME = "clients.db";
-    public static final int DATABASE_VERSION = 1;
+    public static final int DATABASE_VERSION = 2;
 
     Context _context;
 
@@ -57,8 +57,7 @@ public class DatabaseHelper extends SQLiteOpenHelper
     public void
     onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion)
     {
-        // Right now there is only one version
-        return;
+        Client.upgradeDBTables(db, oldVersion, newVersion);
     }
 }
 

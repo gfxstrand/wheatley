@@ -50,12 +50,14 @@ public class Client
         public static final String TITLE = "title";
         public static final String ICON = "icon";
         public static final String COMMAND = "command";
+        public static final String ROOT = "root";
 
         public static final String[] DATABASE_PROJECTION = {
             _ID,
             TITLE,
             ICON,
             COMMAND,
+            ROOT,
         };
     };
 
@@ -67,6 +69,7 @@ public class Client
     private boolean _iconBitmapDirty;
     private String _iconFilename;
     private String _command;
+    private boolean _root;
 
     public Client(Context context)
     {
@@ -82,6 +85,7 @@ public class Client
         _title = cursor.getString(cursor.getColumnIndex(DB.TITLE));
         _iconFilename = cursor.getString(cursor.getColumnIndex(DB.ICON));
         _command = cursor.getString(cursor.getColumnIndex(DB.COMMAND));
+        _root = cursor.getInt(cursor.getColumnIndex(DB.ROOT)) != 0;
     }
 
     public static Client createForCursor(Context context, Cursor cursor)
@@ -152,6 +156,7 @@ public class Client
         cv.put(DB.TITLE, _title);
         cv.put(DB.ICON, _iconFilename);
         cv.put(DB.COMMAND, _command);
+        cv.put(DB.ROOT, _root ? 1 : 0);
 
         if (_id == -1) {
             _id = db.insert(DB.DATABASE_TABLE, null, cv);
@@ -227,6 +232,16 @@ public class Client
         _command = command;
     }
 
+    public boolean getRunAsRoot()
+    {
+        return _root;
+    }
+
+    public void setRunAsRoot(boolean runAsRoot)
+    {
+        _root = runAsRoot;
+    }
+
     static void createDBTables(SQLiteDatabase db)
     {
         db.execSQL("CREATE TABLE " + DB.DATABASE_TABLE + "("
@@ -234,7 +249,17 @@ public class Client
                 + DB.TITLE + " TEXT, "
                 + DB.ICON + " TEXT, "
                 + DB.COMMAND + " TEXT"
+                + DB.ROOT + " INTEGER"
                 + ");");
+    }
+
+    static void upgradeDBTables(SQLiteDatabase db, int oldVersion,
+            int newVersion)
+    {
+        if (oldVersion <= 1 && newVersion >= 2) {
+            db.execSQL("ALTER TABLE " + DB.DATABASE_TABLE + " ADD "
+                    + DB.ROOT + " INTEGER DEFAULT 0");
+        }
     }
 }
 
