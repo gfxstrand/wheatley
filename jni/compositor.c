@@ -129,7 +129,7 @@ Java_net_jlekstrand_wheatley_wayland_Compositor_destroyNative(JNIEnv *env,
 
 JNIEXPORT void JNICALL
 Java_net_jlekstrand_wheatley_wayland_Compositor_launchClientNative(JNIEnv *env,
-        jclass cls, jlong nativeHandle, jbyteArray jcommand)
+        jclass cls, jlong nativeHandle, jbyteArray jcommand, jboolean runAsRoot)
 {
     struct wheatley_compositor *wc =
             (struct wheatley_compositor *)(intptr_t)nativeHandle;
@@ -152,13 +152,13 @@ Java_net_jlekstrand_wheatley_wayland_Compositor_launchClientNative(JNIEnv *env,
 
     ALOGD("Launching client: %s", cmd_str);
 
-    args[0] = "sh";
+    args[0] = runAsRoot ? "/system/xbin/su" : "/system/bin/sh";
     args[1] = "-c";
     args[2] = cmd_str;
     args[3] = NULL;
 
     client = wlb_compositor_launch_client(wc->compositor,
-            "/system/bin/sh", args);
+            args[0], args);
     if (!client) {
         ALOGD("Failed to launch client: %s", strerror(errno));
         jni_util_throw_by_name(env, "java/lang/RuntimeException",

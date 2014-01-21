@@ -39,7 +39,8 @@ public class Compositor
 
     private static native long createNative();
     private static native void destroyNative(long nativeHandle);
-    private static native void launchClientNative(long nativeHandle, byte[] command);
+    private static native void launchClientNative(long nativeHandle,
+            byte[] command, boolean runAsRoot);
     private static native void addToLooperNative(long nativeHandle);
     private static native void removeFromLooperNative(long nativeHandle);
 
@@ -88,7 +89,8 @@ public class Compositor
 
     public void launchClient(Client client)
     {
-        launchClientNative(_nativeHandle, client.getCommand().getBytes());
+        launchClientNative(_nativeHandle, client.getCommand().getBytes(),
+                client.getRunAsRoot());
     }
 
     public void addToLooper()
