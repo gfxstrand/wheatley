@@ -70,6 +70,9 @@ public class ClientListActivity extends ListActivity
             ((TextView)view.findViewById(R.id.command)).setText(
                     client.getCommand());
 
+            view.findViewById(R.id.run_as_root_icon).setVisibility(
+                    client.getRunAsRoot() ? View.VISIBLE : View.GONE);
+
             ImageView iconView = (ImageView)view.findViewById(R.id.icon);
 
             Bitmap icon = client.getIcon();

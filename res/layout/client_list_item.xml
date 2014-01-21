@@ -3,7 +3,7 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:columnCount="2"
+        android:columnCount="3"
         android:padding="4dip">
     <ImageView
             android:id="@+id/icon"
@@ -18,7 +18,17 @@
             android:ellipsize="end"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_columnSpan="2"
             android:textAppearance="?android:attr/textAppearanceLarge" />
+    <TextView
+            android:id="@+id/run_as_root_icon"
+            android:lines="1"
+	    android:text="# "
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+	    android:visibility="gone"
+	    android:textColor="#ff0000" />
     <TextView
             android:id="@+id/command"
             android:lines="1"
