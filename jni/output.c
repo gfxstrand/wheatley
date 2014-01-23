@@ -64,4 +64,22 @@ Java_net_jlekstrand_wheatley_wayland_Output_setModeNative(JNIEnv *env,
     wlb_output_set_mode(output, width, height, refresh);
 }
 
+JNIEXPORT void JNICALL
+Java_net_jlekstrand_wheatley_wayland_Output_prepareFrameNative(JNIEnv *env,
+        jclass cls, jlong nativeHandle)
+{
+    struct wlb_output *output = (struct wlb_output *)(intptr_t)nativeHandle;
+
+    wlb_output_prepare_frame(output);
+}
+
+JNIEXPORT void JNICALL
+Java_net_jlekstrand_wheatley_wayland_Output_frameCompleteNative(JNIEnv *env,
+        jclass cls, jlong nativeHandle, jint timestamp)
+{
+    struct wlb_output *output = (struct wlb_output *)(intptr_t)nativeHandle;
+
+    wlb_output_frame_complete(output, timestamp);
+}
+
 /* vim: set ts=4 sw=4 sts=4 expandtab: */

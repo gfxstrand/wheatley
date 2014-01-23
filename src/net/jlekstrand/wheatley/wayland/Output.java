@@ -35,6 +35,9 @@ public class Output
     private static native void destroyNative(long nativeHandle);
     private static native void setModeNative(long nativeHandle,
             int width, int height, int refresh);
+    private static native void prepareFrameNative(long nativeHandle);
+    private static native void frameCompleteNative(long nativeHandle,
+            int timestamp);
 
     private int _refresh;
 
@@ -67,6 +70,16 @@ public class Output
     {
         _refresh = refresh;
         setModeNative(_nativeHandle, width, height, refresh);
+    }
+
+    public void prepareFrame()
+    {
+        prepareFrameNative(_nativeHandle);
+    }
+
+    public void frameComplete(int timestamp)
+    {
+        frameCompleteNative(_nativeHandle, timestamp);
     }
 
     public void destroy()
