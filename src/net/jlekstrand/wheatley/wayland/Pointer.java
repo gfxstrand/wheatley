@@ -173,11 +173,17 @@ public class Pointer
         }
     }
 
-    @Override
-    public void finalize() throws Throwable
+    public void destroy()
     {
         if (_nativeHandle != 0)
             destroyNative(_nativeHandle);
+        _nativeHandle = 0;
+    }
+
+    @Override
+    public void finalize() throws Throwable
+    {
+        destroy();
 
         super.finalize();
     }
