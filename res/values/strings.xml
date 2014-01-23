@@ -6,4 +6,5 @@
     <string name="no">No</string>
     <string name="run_as_root">Run as root</string>
     <string name="are_you_sure_root">Are you sure you want this program to run as root?</string>
+    <string name="compositor_failed">Failed to start compositor.</string>
 </resources>

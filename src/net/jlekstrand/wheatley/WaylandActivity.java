@@ -22,10 +22,16 @@
 package net.jlekstrand.wheatley;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Message;
 import android.util.Log;
+import android.widget.Toast;
 import android.view.Choreographer;
 import android.view.InputDevice;
 import android.view.KeyEvent;
@@ -37,17 +43,21 @@ import android.view.View;
 
 import net.jlekstrand.wheatley.wayland.Compositor;
 import net.jlekstrand.wheatley.wayland.Output;
+import net.jlekstrand.wheatley.wayland.Renderer;
 import net.jlekstrand.wheatley.config.Client;
 
 public class WaylandActivity extends Activity
-        implements SurfaceHolder.Callback2
+        implements SurfaceHolder.Callback2, ServiceConnection
 {
     private static final String LOG_TAG = "wheatley:WaylandActivity";
 
+/*
     private long _nativeHandle;
 
-    private static native long createNative(long compositorHandle);
+    private static native long createNative();
     private static native void destroyNative(long nativeHandle);
+    private static native void setCompositorNative(long nativeHandle,
+            long compositorHandle);
     private static native void surfaceCreatedNative(long nativeHandle,
             long outputHandle, Surface surface);
     private static native void surfaceDestroyedNative(long nativeHandle,
@@ -56,14 +66,21 @@ public class WaylandActivity extends Activity
             long outputHandle, boolean forceRepaint);
     private static native void repaintFinishedNative(long nativeHandle,
             long outputHandle, int timestamp);
+*/
 
     private Compositor _compositor;
+    private Renderer _renderer;
     private Output _output;
-    private Choreographer _choreographer;
     private Surface _surface;
+    private int _swidth, _sheight;
 
+    private Choreographer _choreographer;
     private FramerateEstimator _rateEstimator;
     private FramerateLogger _rateLogger;
+
+    private CompositorService.Binder _compositorServiceBinder;
+    private CompositorService _compositorService;
+    private Handler _compositorServiceHandler;
 
     private boolean _repaintScheduled;
 
@@ -72,8 +89,6 @@ public class WaylandActivity extends Activity
     onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-
-        Intent intent = getIntent();
 
         setContentView(new View(this));
         getWindow().takeSurface(this);
@@ -84,25 +99,30 @@ public class WaylandActivity extends Activity
         _rateEstimator = new FramerateEstimator(10);
         _rateLogger = new FramerateLogger(5000000000L, 1000000000L);
 
-        Uri clientUri = intent.getData();
-        if (clientUri == null) {
-            finish();
-            return;
-        }
-
-        Client client = Client.createForUri(this, null, clientUri);
-        if (client == null) {
-            finish();
-            return;
-        }
-
-        _compositor = new Compositor(this, client);
-        _compositor.addToLooper();
-        _output = _compositor.getPrimaryOutput();
-
-        _nativeHandle = createNative(_compositor.getNativeHandle());
-
         _repaintScheduled = false;
+    }
+
+    @Override
+    public void
+    onStart()
+    {
+        super.onStart();
+
+        Intent intent = new Intent(this, CompositorService.class);
+        bindService(intent, this, BIND_AUTO_CREATE);
+    }
+
+    @Override
+    public void
+    onStop()
+    {
+        destroyRenderer();
+
+        _compositor.removeFromLooper();
+        _compositorService.returnCompositor(_compositor);
+        _compositor = null;
+
+        super.onStop();
     }
 
     private final Choreographer.FrameCallback _repaintCallback = 
@@ -112,18 +132,17 @@ public class WaylandActivity extends Activity
             {
                 _repaintScheduled = false;
 
-                // It is possible that the surface was removed after the
-                // callback was posted.  In this case, we just return early.
-                if (_surface == null)
+                if (_renderer == null)
                     return;
 
-                repaintNative(_nativeHandle, _output.getNativeHandle(), false);
+                _output.prepareFrame();
+                _renderer.repaintOutput(_output, false);
 
                 _rateLogger.frame(frameTimeNanos);
                 _rateEstimator.addFrameTime(frameTimeNanos);
                 long nextTime = frameTimeNanos + _rateEstimator.getEstimate();
-                repaintFinishedNative(_nativeHandle, _output.getNativeHandle(),
-                        (int)(nextTime / 1000000));
+
+                _output.frameComplete((int)(nextTime / 1000000));
 
                 scheduleRepaint();
             }
@@ -140,36 +159,95 @@ public class WaylandActivity extends Activity
         _repaintScheduled = true;
     }
 
-    @Override
-    public void
-    onDestroy()
+    private void handleCompositorServiceMessage(Message msg)
     {
-        destroyNative(_nativeHandle);
-        _nativeHandle = 0;
+        Log.d(LOG_TAG, "Received service message");
 
-        super.onDestroy();
+        switch(msg.what) {
+        case CompositorService.COMPOSITOR_READY:
+            _compositor = (Compositor)msg.obj;
+            _compositor.addToLooper();
+            createRenderer();
+            break;
+        case CompositorService.COMPOSITOR_ERROR:
+            Toast.makeText(this, R.string.compositor_failed, Toast.LENGTH_LONG);
+            finish();
+            break;
+        }
+    }
+
+    @Override
+    public void onServiceConnected(ComponentName className, IBinder binder)
+    {
+        Log.d(LOG_TAG, "Service Connected");
+
+        _compositorServiceBinder = (CompositorService.Binder)binder;
+        _compositorService = _compositorServiceBinder.getService();
+        _compositorServiceHandler = new Handler() {
+            @Override
+            public void handleMessage(Message msg)
+            {
+                handleCompositorServiceMessage(msg);
+            }
+        };
+
+        _compositorService.requestCompositor(getIntent().getData(),
+                _compositorServiceHandler);
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName className)
+    {
+        Log.d(LOG_TAG, "Service Disconnected");
+        
+        _compositorService = null;
+        _compositorServiceBinder = null;
+        _compositorServiceHandler = null;
+    }
+
+    private void createRenderer()
+    {
+        if (_surface == null || _compositor == null)
+            return;
+
+        _renderer = new Renderer(_compositor);
+
+        _output = _compositor.getPrimaryOutput();
+        _output.setMode(_swidth, _sheight);
+
+        _renderer.addOutput(_output, _surface);
+
+        scheduleRepaint();
+    }
+
+    private void destroyRenderer()
+    {
+        if (_renderer == null)
+            return;
+
+        _renderer.destroy();
+        _renderer = null;
     }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder)
     {
-        _surface = holder.getSurface();
-        surfaceCreatedNative(_nativeHandle, _output.getNativeHandle(),
-                _surface);
-        scheduleRepaint();
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h)
     {
-        _output.setMode(w, h);
-        scheduleRepaint();
+        _surface = holder.getSurface();
+        _swidth = w;
+        _sheight = h;
+
+        createRenderer();
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder)
     {
-        surfaceDestroyedNative(_nativeHandle, _output.getNativeHandle());
+        destroyRenderer();
         _surface = null;
     }
 
