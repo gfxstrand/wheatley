@@ -42,17 +42,11 @@ public class Seat
 
     public void destroy()
     {
-        if (_nativeHandle != 0)
-            destroyNative(_nativeHandle);
+        if (_nativeHandle == 0)
+            return;
+
+        destroyNative(_nativeHandle);
         _nativeHandle = 0;
-    }
-
-    @Override
-    public void finalize() throws Throwable
-    {
-        destroy();
-
-        super.finalize();
     }
 }
 

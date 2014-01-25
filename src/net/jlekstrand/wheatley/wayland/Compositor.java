@@ -170,16 +170,7 @@ public class Compositor
         _output.destroy();
 
         destroyNative(_nativeHandle);
-
         _nativeHandle = 0;
-    }
-
-    @Override
-    public void finalize() throws Throwable
-    {
-        destroy();
-
-        super.finalize();
     }
 
     static {
