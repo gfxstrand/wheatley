@@ -155,6 +155,7 @@ public class ClientListActivity extends ListActivity
         if (Intent.ACTION_CREATE_SHORTCUT.equals(_action)) {
             Intent shortcutIntent = new Intent(this, WaylandActivity.class);
             shortcutIntent.setAction(Intent.ACTION_RUN);
+            shortcutIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             shortcutIntent.setData(Client.BASE_CONTENT_URI.buildUpon().appendPath(String.valueOf(id)).build());
 
             Client client = Client.createForId(this, _database, id);
