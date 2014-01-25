@@ -108,6 +108,8 @@ public class WaylandActivity extends Activity
     {
         super.onStart();
 
+        Log.d(LOG_TAG, "Activity started: " + getIntent());
+
         Intent intent = new Intent(this, CompositorService.class);
         bindService(intent, this, BIND_AUTO_CREATE);
     }
@@ -121,6 +123,8 @@ public class WaylandActivity extends Activity
         _compositor.removeFromLooper();
         _compositorService.returnCompositor(_compositor);
         _compositor = null;
+
+        unbindService(this);
 
         super.onStop();
     }
