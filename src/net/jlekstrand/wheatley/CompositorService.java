@@ -31,6 +31,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.os.RemoteException;
 import android.util.Log;
 
 import net.jlekstrand.wheatley.wayland.*;
@@ -57,7 +58,7 @@ public class CompositorService extends Service
 
     Binder _binder = new Binder();
 
-    private class KeepAliveThread extends Thread implements Handler.Callback
+    private class KeepAliveThread extends Thread
     {
         public Handler handler;
         
@@ -66,25 +67,12 @@ public class CompositorService extends Service
         {
             Looper.prepare();
 
-            handler = new Handler(this);
-            notifyAll();
-
-            Looper.loop();
-        }
-
-        @Override
-        public boolean handleMessage(Message msg)
-        {
-            switch (msg.what) {
-            case ATTACH_COMPOSITOR:
-                ((Compositor)msg.obj).addToLooper();
-                break;
-            case DETATCH_COMPOSITOR:
-                ((Compositor)msg.obj).removeFromLooper();
-                break;
+            synchronized (this) {
+                handler = new Handler();
+                notifyAll();
             }
 
-            return true;
+            Looper.loop();
         }
     }
 
@@ -92,6 +80,7 @@ public class CompositorService extends Service
 
     private SQLiteDatabase _database;
     private HashMap<Uri, Compositor> _instanceMap;
+    private int _lastStartId;
 
     @Override
     public void onCreate()
@@ -111,30 +100,92 @@ public class CompositorService extends Service
         return _binder;
     }
 
-    public synchronized boolean isRunning(Uri uri)
+    private void queueRunnable(Runnable r)
     {
-        return false;
+        if (_keepAliveThread == null) {
+            Log.d(LOG_TAG, "Creating keep-alive thread");
+
+            _keepAliveThread = new KeepAliveThread();
+            _keepAliveThread.start();
+
+            synchronized (_keepAliveThread) {
+                while(_keepAliveThread.handler == null) {
+                    if (!_keepAliveThread.isAlive())
+                        throw new RuntimeException("Keep-alive thread died unexpectedly");
+
+                    try {
+                        _keepAliveThread.wait();
+                    } catch (InterruptedException e) {
+                    }
+                }
+            }
+        }
+
+        if (!_keepAliveThread.handler.post(r))
+            Log.wtf(LOG_TAG, "Failed to post runnable");
     }
 
-    public void requestCompositor(Uri uri, Handler returnHandler)
+    public synchronized boolean isRunning(Uri uri)
     {
-        Client client = Client.createForUri(this, _database, uri);
+        return _instanceMap.containsKey(uri);
+    }
 
-        Compositor compositor = new Compositor(this, client);
+    // This method MUST be called from the keep-alive thread.
+    private synchronized void fetchCompositor(Uri uri, Handler returnHandler)
+    {
+        if (!_instanceMap.containsKey(uri)) {
+            returnHandler.sendMessage(
+                    Message.obtain(returnHandler, COMPOSITOR_ERROR));
+            return;
+        }
 
+        Compositor compositor = _instanceMap.get(uri);
+        compositor.removeFromLooper();
         returnHandler.sendMessage(Message.obtain(returnHandler,
                 COMPOSITOR_READY, compositor));
     }
 
-    public void returnCompositor(Compositor compositor)
+    public synchronized void requestCompositor(final Uri uri,
+            final Handler returnHandler)
     {
-        compositor.destroy();
+        if (_instanceMap.containsKey(uri)) {
+            Log.d(LOG_TAG, "Client already started: " + uri);
+            queueRunnable(new Runnable() {
+                @Override
+                public void run()
+                {
+                    fetchCompositor(uri, returnHandler);
+                }
+            });
+        } else {
+            Log.d(LOG_TAG, "Starting client: " + uri);
+            Client client = Client.createForUri(this, _database, uri);
+            Compositor compositor = new Compositor(this, client);
+            _instanceMap.put(uri, compositor);
+            returnHandler.sendMessage(Message.obtain(returnHandler,
+                    COMPOSITOR_READY, compositor));
+        }
+    }
+
+    public synchronized void returnCompositor(final Compositor compositor)
+    {
+        startService(new Intent(this, CompositorService.class));
+
+        queueRunnable(new Runnable() {
+            @Override
+            public void run()
+            {
+                compositor.addToLooper();
+            }
+        });
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId)
     {
         super.onStartCommand(intent, flags, startId);
+
+        _lastStartId = startId;
 
         return START_STICKY;
     }
